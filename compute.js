@@ -1,4 +1,4 @@
-console.log('XXX hello world!');
+var debugOn = true;
 var HandType;
 (function (HandType) {
     HandType[HandType["FlushStraight"] = 9] = "FlushStraight";
@@ -32,6 +32,42 @@ var Card = (function () {
     Card.prototype.getNumber = function () {
         return Math.floor(this.index / 4);
     }; //
+    Card.prototype.getNumberStr = function () {
+        var n = this.getNumber();
+        console.assert(n >= 0 && n <= 12, "n is incorrect, n = " + n);
+        if (n < 8)
+            return (n + 2).toString();
+        else {
+            switch (n) {
+                case 8:
+                    return 'T';
+                case 9:
+                    return 'J';
+                case 10:
+                    return 'Q';
+                case 11:
+                    return 'K';
+                case 12:
+                    return 'A';
+            }
+        }
+    };
+    Card.prototype.getColorStrShort = function () {
+        var c = this.getColor();
+        switch (c) {
+            case Color.Spade:
+                return 's';
+            case Color.Club:
+                return 'c';
+            case Color.Heart:
+                return 'h';
+            case Color.Diamond:
+                return 'd';
+        }
+    };
+    Card.prototype.getNumberWithColorStr = function () {
+        return this.getNumberStr() + this.getColorStrShort();
+    };
     Card.prototype.getColor = function () {
         switch (this.index % 4) {
             case 0:
@@ -377,16 +413,16 @@ var Hand = (function () {
     return Hand;
 }());
 var Computer = (function () {
-    function Computer(cardIndex1, cardIndex2, emulationTimes, numberOfPlayers, considerSplitAsPartiallyWin) {
-        if (emulationTimes === void 0) { emulationTimes = 100000; }
+    function Computer(myCardIndex1, myCardIndex2, emulationTimes, numberOfPlayers, considerSplitAsPartiallyWin) {
+        if (emulationTimes === void 0) { emulationTimes = 1000; }
         if (numberOfPlayers === void 0) { numberOfPlayers = 2; }
         if (considerSplitAsPartiallyWin === void 0) { considerSplitAsPartiallyWin = true; }
-        this.cardIndex1 = cardIndex1;
-        this.cardIndex2 = cardIndex2;
+        this.myCardIndex1 = myCardIndex1;
+        this.myCardIndex2 = myCardIndex2;
         this.emulationTimes = emulationTimes;
         this.numberOfPlayers = numberOfPlayers;
         this.considerSplitAsPartiallyWin = considerSplitAsPartiallyWin;
-        console.assert(cardIndex2 != cardIndex1, 'initial cards should not be the same');
+        console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
         // TODO(zzn): add more validation
     }
     /**
@@ -396,15 +432,31 @@ var Computer = (function () {
     Computer.prototype.computeEquity = function () {
         var winTimes = 0;
         for (var i = 0; i < this.emulationTimes; i++) {
-            var pickedCards = Computer.randomlyPickCards((this.numberOfPlayers - 1) * 2 + 5, [this.cardIndex1, this.cardIndex2]);
-            var communityCards = pickedCards.slice((this.numberOfPlayers - 1) * 2); // last 5 cards as community cards;
-            var myCards = [this.cardIndex1, this.cardIndex2].concat(communityCards);
+            var pickedCardIndices = Computer.randomlyPickCards((this.numberOfPlayers - 1) * 2 + 5, [this.myCardIndex1, this.myCardIndex2]);
+            var communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) * 2); // last 5 cards as community cards;
+            var myCards = [this.myCardIndex1, this.myCardIndex2].concat(communityCardIndices);
             var myHand = new Hand(myCards);
             var numOfSplit = 1; // number of split players
             for (var o = 0; o < this.numberOfPlayers - 1; o++) {
-                var oCards = [pickedCards[o * 2], pickedCards[o * 2 + 1]].concat(communityCards);
+                var oCards = [pickedCardIndices[o * 2], pickedCardIndices[o * 2 + 1]].concat(communityCardIndices);
                 var oHand = new Hand(oCards);
                 var compareResult = myHand.compareWith(oHand);
+                /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
+                if (debugOn) {
+                    var oCardIndex1 = pickedCardIndices[o * 2];
+                    var oCardIndex2 = pickedCardIndices[o * 2 + 1];
+                    var oCard1 = new Card(oCardIndex1);
+                    var oCard2 = new Card(oCardIndex2);
+                    var myCard1 = new Card(this.myCardIndex1);
+                    var myCard2 = new Card(this.myCardIndex2);
+                    var communityCards = communityCardIndices.map(function (i) { return new Card(i); });
+                    console.log("XXX DEBUG: My Cards: " + (myCard1.getNumberWithColorStr() + ' ' + myCard2.getNumberWithColorStr()));
+                    console.log("XXX DEBUG: O Cards: " + (oCard1.getNumberWithColorStr() + ' ' + oCard2.getNumberWithColorStr()));
+                    console.log("XXX DEBUG: Community Cards: " + communityCards.map(function (c) { return c.getNumberWithColorStr(); }).join(' '));
+                    console.log("XXX DEBUG: My Hand Type: " + HandType[myHand.getHandType()]);
+                    console.log("XXX DEBUG: O Hand Type: " + HandType[oHand.getHandType()]);
+                    console.log("XXX DEBUG: compare result = " + compareResult);
+                }
                 if (compareResult < 0) {
                     numOfSplit = 0;
                     break; // lost already
@@ -444,8 +496,62 @@ var Computer = (function () {
     };
     return Computer;
 }());
-console.log('XXX creating computer!');
-var computer = new Computer(0, 5);
-console.log('XXX start computing!');
-console.log(computer.computeEquity());
-console.log('XXX computation completes');
+var computeCsvSheet = function () {
+    var suitedOdds = {};
+    var offSuitedOdds = {};
+    /**
+     * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
+     * bottom right is 22.
+     * First index is the row, and second index is the column
+     * @type {Array}
+     */
+    var sheet = [];
+    for (var i = 0; i < 13; i++) {
+        var row = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        sheet.push(row);
+    }
+    // Suited
+    for (var n1 = 12; n1 >= 0; n1--) {
+        for (var n2 = n1 - 1; n2 >= 0; n2--) {
+            var cardIndex1 = n1 * 4;
+            var cardIndex2 = n2 * 4;
+            var card1 = new Card(cardIndex1);
+            var card2 = new Card(cardIndex2);
+            var computer = new Computer(cardIndex1, cardIndex2);
+            var equity = computer.computeEquity();
+            suitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
+            sheet[12 - n1][12 - n2] = equity;
+        }
+        console.log('XXX computed a line of suited odds, row card number = ' + n1);
+    }
+    // Off suited
+    for (var n1 = 12; n1 >= 0; n1--) {
+        for (var n2 = 12; n2 >= n1; n2--) {
+            var cardIndex1 = n1 * 4 + 1;
+            var cardIndex2 = n2 * 4;
+            var card1 = new Card(cardIndex1);
+            var card2 = new Card(cardIndex2);
+            var computer = new Computer(cardIndex1, cardIndex2);
+            var equity = computer.computeEquity();
+            offSuitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
+            sheet[12 - n1][12 - n2] = equity;
+        }
+        console.log('XXX computed a line of off suited odds, row card number = ' + n1);
+    }
+    for (var i = 0; i < 13; i++) {
+        var row = '';
+        for (var j = 0; j < 13; j++) {
+            row = row + sheet[i][j] + ',';
+        }
+        console.log(row);
+    }
+};
+var computeSingle = function () {
+    var computer = new Computer(51, 46);
+    console.log('XXX Start computing equity of AKo in an headsup');
+    console.log(computer.computeEquity());
+};
+var main = function () {
+    computeSingle();
+};
+main();
