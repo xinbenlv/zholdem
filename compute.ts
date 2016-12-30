@@ -1,5 +1,9 @@
-let debugOn = true;
-enum HandType {
+let debugOn = false;
+Object.prototype['sortAsIntegerArray'] = function() {
+  // assumming this is an Array<number>
+  return this.sort((a,b) => a-b);
+};
+export enum HandType {
   FlushStraight = 9,
   FourOfAKind = 8,
   FullHouse = 7,
@@ -11,14 +15,14 @@ enum HandType {
   HighCard = 1,
 }
 
-enum Color {
+export enum Color {
   Spade = 0,
   Club = 1,
   Heart = 2,
   Diamond = 3,
 }
 
-class Card {
+export class Card {
   /**
    * The index of card, from 0 - 51, whereas 0 - 3 means 2 of four color,
    * 48 - 51 means A of four colors
@@ -74,7 +78,9 @@ class Card {
   }
 
   getNumberWithColorStr(): string {
-    return this.getNumberStr() + this.getColorStrShort();
+    let str = this.getNumberStr() + this.getColorStrShort();
+    if (debugOn) str += `(${this.index})`;
+    return str;
   }
 
   getColor(): Color {
@@ -91,11 +97,11 @@ class Card {
   }
 }
 
-class Hand {
+export class Hand {
   /**
    * Indices of the 7 cards that I have.
    */
-  myCards:Card[];
+  public myCards:Card[]; // TODO temp open to Card
 
   /**
    *   card indices for detail comparison
@@ -103,14 +109,10 @@ class Hand {
   resultNumbers:number[];
   private handType:HandType;
 
-  constructor(myCards:number[]) {
+  constructor(myCardIndices:number[]) {
     // TODO assert no duplicates
-    let cardIndices = myCards.sort();
     this.myCards = [];
-    for (let n of cardIndices) {
-      let c:Card = new Card(n);
-      this.myCards.push(c);
-    }
+    this.myCards = myCardIndices.map(cI => new Card(cI));
     this.handType = this.analyse();
   }
 
@@ -165,7 +167,7 @@ class Hand {
         }
       });
       let numbers:number[] = Object.keys(numberSet)
-          .map((keyStr) => parseInt(keyStr)).sort();
+          .map((keyStr) => parseInt(keyStr))['sortAsIntegerArray']();
       if (numbers.indexOf(12) > 0) {
         numbers = [-1].concat(numbers);
       }
@@ -199,7 +201,7 @@ class Hand {
       let kicker = Object.keys(numberSet)
           .map(keyStr => parseInt(keyStr))
           .filter(index => index!=cardOfFourIndex)
-          .sort().reverse()[0];
+          ['sortAsIntegerArray']().reverse()[0];
       this.resultNumbers = [cardOfFourIndex, kicker];
     }
     return result;
@@ -266,7 +268,7 @@ class Hand {
       if (numberSet[myCard.getNumber()] === undefined) numberSet[myCard.getNumber()] = 1;
       else numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
     });
-    let numbers:number[] = Object.keys(numberSet).map((keyStr) => parseInt(keyStr)).sort();
+    let numbers:number[] = Object.keys(numberSet).map((keyStr) => parseInt(keyStr))['sortAsIntegerArray']();
     if (numbers.indexOf(12) > 0) {
       numbers = [-1].concat(numbers);
     }
@@ -308,7 +310,7 @@ class Hand {
     if (result) {
       let otherNumbers = this.myCards.map((card:Card) => card.getNumber())
           .filter(number => number != currentTopCardNumber)
-          .sort()
+          ['sortAsIntegerArray']()
           .reverse()
           .slice(0, 2);
       this.resultNumbers = [currentTopCardNumber].concat(otherNumbers);
@@ -330,12 +332,12 @@ class Hand {
       let pairNumbers = Object.keys(numberSet)
           .filter((key) => numberSet[key] >= 2)
           .map((keyStr) => parseInt(keyStr))
-          .sort()
+          ['sortAsIntegerArray']()
           .reverse()
           .slice(0, 2);
       let restNumber = Object.keys(numberSet).map(keyStr => parseInt(keyStr))
           .filter(key => pairNumbers.indexOf(key) < 0) // not selected in pairIndex
-          .sort()
+          ['sortAsIntegerArray']()
           .reverse()[0];
       this.resultNumbers = pairNumbers.concat([restNumber]);
       return true;
@@ -349,11 +351,11 @@ class Hand {
       if (numberSet[myCard.getNumber()] === undefined) numberSet[myCard.getNumber()] = 1;
       else numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
       if (numberSet[myCard.getNumber()] >= 2) {
-        let pairNumber = myCard.getNumber();
-        let otherNumbers = this.myCards
+        let pairNumber:number = myCard.getNumber();
+        let otherNumbers:number[] = this.myCards
             .map((card:Card) => card.getNumber())
-            .filter(number => number != pairNumber)
-            .sort()
+            .filter((n:number) => n != pairNumber)
+            ['sortAsIntegerArray']()
             .reverse().slice(0,3);
         this.resultNumbers = [pairNumber].concat(otherNumbers);
         return true;
@@ -367,7 +369,7 @@ class Hand {
    */
   private isHighCard(): boolean {
     this.resultNumbers = this.myCards.map((card:Card) => card.getNumber())
-        .sort()
+        ['sortAsIntegerArray']()
         .reverse().slice(0,5);
     return true;
   }
@@ -395,11 +397,11 @@ class Hand {
   }
 }
 
-class Computer {
+export class Computer {
   constructor(
       private myCardIndex1,
       private myCardIndex2,
-      private emulationTimes = 1000,
+      private emulationTimes = 10000,
       private numberOfPlayers = 2,
       private considerSplitAsPartiallyWin = true) {
     console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
@@ -409,9 +411,11 @@ class Computer {
   /**
    * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
    * @returns {number}
+   * TODO(zzn): compute confidential interval, compute split ratio
    */
   computeEquity():number {
     let winTimes = 0;
+    // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
     for (let i = 0 ; i < this.emulationTimes; i++) {
       let pickedCardIndices = Computer.randomlyPickCards(
           (this.numberOfPlayers - 1) * 2 + 5,
@@ -423,8 +427,6 @@ class Computer {
       for (let o = 0; o < this.numberOfPlayers - 1; o++) {
         let oCards = [pickedCardIndices[o * 2], pickedCardIndices[o * 2 + 1]].concat(communityCardIndices);
         let oHand = new Hand(oCards);
-
-
         let compareResult = myHand.compareWith(oHand);
 
         /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
@@ -436,12 +438,16 @@ class Computer {
           let myCard1 = new Card(this.myCardIndex1);
           let myCard2 = new Card(this.myCardIndex2);
           let communityCards:Card[] = communityCardIndices.map(i => new Card(i));
-          console.log(`XXX DEBUG: My Cards: ${myCard1.getNumberWithColorStr() + ' ' + myCard2.getNumberWithColorStr()}`);
-          console.log(`XXX DEBUG: O Cards: ${oCard1.getNumberWithColorStr() + ' ' + oCard2.getNumberWithColorStr()}`);
-          console.log(`XXX DEBUG: Community Cards: ${communityCards.map(c => c.getNumberWithColorStr()).join(' ')}`);
-          console.log(`XXX DEBUG: My Hand Type: ${HandType[myHand.getHandType()]}`);
-          console.log(`XXX DEBUG: O Hand Type: ${HandType[oHand.getHandType()]}`);
-          console.log(`XXX DEBUG: compare result = ${compareResult}`);
+          if (compareResult < 1) {
+            console.log(`XXX DEBUG: Simulation #${i}`);
+            console.log(`XXX DEBUG: My Cards: ${myCard1.getNumberWithColorStr() + ' ' + myCard2.getNumberWithColorStr()}`);
+            console.log(`XXX DEBUG: O Cards: ${oCard1.getNumberWithColorStr() + ' ' + oCard2.getNumberWithColorStr()}`);
+            console.log(`XXX DEBUG: Community Cards: ${communityCards.map(c => c.getNumberWithColorStr()).join(' ')}`);
+            console.log(`XXX DEBUG: My Hand Type: ${HandType[myHand.getHandType()]}`);
+            console.log(`XXX DEBUG: O Hand Type: ${HandType[oHand.getHandType()]}`);
+            console.log(`XXX DEBUG: compare result = ${compareResult}`);
+            console.log('');
+          }
         }
 
 
@@ -450,8 +456,13 @@ class Computer {
           break; // lost already
         } if (compareResult == 0) {
           // for split case, add one splitting player
-          if (this.considerSplitAsPartiallyWin)numOfSplit ++;
-          else numOfSplit = 0;
+          if (this.considerSplitAsPartiallyWin) {
+            numOfSplit ++;
+          }
+          else {
+            numOfSplit = 0;
+            break;
+          }
         }
       }
       if (numOfSplit > 0) {
@@ -481,69 +492,3 @@ class Computer {
     return picked;
   }
 }
-
-let computeCsvSheet = function():void {
-  let suitedOdds:{[indices:string]:number} = {};
-  let offSuitedOdds:{[indices:string]:number} = {};
-  /**
-   * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
-   * bottom right is 22.
-   * First index is the row, and second index is the column
-   * @type {Array}
-   */
-  let sheet:number[][] = [];
-  for (let i = 0; i < 13; i++) {
-    let row = [0,0,0,0,0,0,0,0,0,0,0,0,0];
-    sheet.push(row);
-  }
-
-  // Suited
-  for (let n1 = 12; n1 >= 0; n1--) {
-    for (let n2=n1-1; n2 >= 0; n2 --) {
-      let cardIndex1 = n1 * 4;
-      let cardIndex2 = n2 * 4;
-      let card1:Card = new Card(cardIndex1);
-      let card2:Card = new Card(cardIndex2);
-      let computer = new Computer(cardIndex1,cardIndex2);
-      let equity:number = computer.computeEquity();
-      suitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-      sheet[12 - n1][12 - n2] = equity;
-    }
-    console.log('XXX computed a line of suited odds, row card number = ' + n1);
-  }
-
-  // Off suited
-  for (let n1 = 12; n1>= 0; n1--) {
-    for (let n2 = 12; n2 >= n1; n2 --) {
-      let cardIndex1 = n1 * 4 + 1;
-      let cardIndex2 = n2 * 4;
-      let card1:Card = new Card(cardIndex1);
-      let card2:Card = new Card(cardIndex2);
-      let computer = new Computer(cardIndex1,cardIndex2);
-      let equity:number = computer.computeEquity();
-      offSuitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-      sheet[12 - n1][12 - n2] = equity;
-    }
-    console.log('XXX computed a line of off suited odds, row card number = ' + n1);
-  }
-
-  for (let i = 0; i < 13; i++) {
-    let row = '';
-    for (let j = 0; j < 13; j++) {
-      row = row + sheet[i][j] + ',';
-    }
-    console.log(row);
-  }
-};
-
-let computeSingle = function():void {
-  let computer:Computer = new Computer(51, 46);
-  console.log('XXX Start computing equity of AKo in an headsup');
-  console.log(computer.computeEquity());
-};
-
-let main = function():void {
-  computeSingle();
-};
-
-main();

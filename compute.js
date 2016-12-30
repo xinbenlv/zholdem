@@ -1,5 +1,9 @@
-var debugOn = true;
-var HandType;
+"use strict";
+var debugOn = false;
+Object.prototype['sortAsIntegerArray'] = function () {
+    // assumming this is an Array<number>
+    return this.sort(function (a, b) { return a - b; });
+};
 (function (HandType) {
     HandType[HandType["FlushStraight"] = 9] = "FlushStraight";
     HandType[HandType["FourOfAKind"] = 8] = "FourOfAKind";
@@ -10,14 +14,15 @@ var HandType;
     HandType[HandType["TwoPairs"] = 3] = "TwoPairs";
     HandType[HandType["OnePair"] = 2] = "OnePair";
     HandType[HandType["HighCard"] = 1] = "HighCard";
-})(HandType || (HandType = {}));
-var Color;
+})(exports.HandType || (exports.HandType = {}));
+var HandType = exports.HandType;
 (function (Color) {
     Color[Color["Spade"] = 0] = "Spade";
     Color[Color["Club"] = 1] = "Club";
     Color[Color["Heart"] = 2] = "Heart";
     Color[Color["Diamond"] = 3] = "Diamond";
-})(Color || (Color = {}));
+})(exports.Color || (exports.Color = {}));
+var Color = exports.Color;
 var Card = (function () {
     function Card(index) {
         this.index = index;
@@ -66,7 +71,10 @@ var Card = (function () {
         }
     };
     Card.prototype.getNumberWithColorStr = function () {
-        return this.getNumberStr() + this.getColorStrShort();
+        var str = this.getNumberStr() + this.getColorStrShort();
+        if (debugOn)
+            str += "(" + this.index + ")";
+        return str;
     };
     Card.prototype.getColor = function () {
         switch (this.index % 4) {
@@ -82,16 +90,12 @@ var Card = (function () {
     };
     return Card;
 }());
+exports.Card = Card;
 var Hand = (function () {
-    function Hand(myCards) {
+    function Hand(myCardIndices) {
         // TODO assert no duplicates
-        var cardIndices = myCards.sort();
         this.myCards = [];
-        for (var _i = 0, cardIndices_1 = cardIndices; _i < cardIndices_1.length; _i++) {
-            var n = cardIndices_1[_i];
-            var c = new Card(n);
-            this.myCards.push(c);
-        }
+        this.myCards = myCardIndices.map(function (cI) { return new Card(cI); });
         this.handType = this.analyse();
     }
     /**
@@ -155,7 +159,7 @@ var Hand = (function () {
                 }
             });
             var numbers = Object.keys(numberSet_1)
-                .map(function (keyStr) { return parseInt(keyStr); }).sort();
+                .map(function (keyStr) { return parseInt(keyStr); })['sortAsIntegerArray']();
             if (numbers.indexOf(12) > 0) {
                 numbers = [-1].concat(numbers);
             }
@@ -192,8 +196,7 @@ var Hand = (function () {
         if (result) {
             var kicker = Object.keys(numberSet)
                 .map(function (keyStr) { return parseInt(keyStr); })
-                .filter(function (index) { return index != cardOfFourIndex; })
-                .sort().reverse()[0];
+                .filter(function (index) { return index != cardOfFourIndex; })['sortAsIntegerArray']().reverse()[0];
             this.resultNumbers = [cardOfFourIndex, kicker];
         }
         return result;
@@ -265,7 +268,7 @@ var Hand = (function () {
             else
                 numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
         });
-        var numbers = Object.keys(numberSet).map(function (keyStr) { return parseInt(keyStr); }).sort();
+        var numbers = Object.keys(numberSet).map(function (keyStr) { return parseInt(keyStr); })['sortAsIntegerArray']();
         if (numbers.indexOf(12) > 0) {
             numbers = [-1].concat(numbers);
         }
@@ -311,8 +314,7 @@ var Hand = (function () {
         }
         if (result) {
             var otherNumbers = this.myCards.map(function (card) { return card.getNumber(); })
-                .filter(function (number) { return number != currentTopCardNumber; })
-                .sort()
+                .filter(function (number) { return number != currentTopCardNumber; })['sortAsIntegerArray']()
                 .reverse()
                 .slice(0, 2);
             this.resultNumbers = [currentTopCardNumber].concat(otherNumbers);
@@ -337,13 +339,12 @@ var Hand = (function () {
         if (numPairs >= 2) {
             var pairNumbers_1 = Object.keys(numberSet)
                 .filter(function (key) { return numberSet[key] >= 2; })
-                .map(function (keyStr) { return parseInt(keyStr); })
-                .sort()
+                .map(function (keyStr) { return parseInt(keyStr); })['sortAsIntegerArray']()
                 .reverse()
                 .slice(0, 2);
             var restNumber = Object.keys(numberSet).map(function (keyStr) { return parseInt(keyStr); })
                 .filter(function (key) { return pairNumbers_1.indexOf(key) < 0; }) // not selected in pairIndex
-                .sort()
+            ['sortAsIntegerArray']()
                 .reverse()[0];
             this.resultNumbers = pairNumbers_1.concat([restNumber]);
             return true;
@@ -361,8 +362,7 @@ var Hand = (function () {
                 var pairNumber_1 = myCard.getNumber();
                 var otherNumbers = this_1.myCards
                     .map(function (card) { return card.getNumber(); })
-                    .filter(function (number) { return number != pairNumber_1; })
-                    .sort()
+                    .filter(function (n) { return n != pairNumber_1; })['sortAsIntegerArray']()
                     .reverse().slice(0, 3);
                 this_1.resultNumbers = [pairNumber_1].concat(otherNumbers);
                 return { value: true };
@@ -380,8 +380,7 @@ var Hand = (function () {
      * @returns {boolean} Alwayse return true
      */
     Hand.prototype.isHighCard = function () {
-        this.resultNumbers = this.myCards.map(function (card) { return card.getNumber(); })
-            .sort()
+        this.resultNumbers = this.myCards.map(function (card) { return card.getNumber(); })['sortAsIntegerArray']()
             .reverse().slice(0, 5);
         return true;
     };
@@ -412,9 +411,10 @@ var Hand = (function () {
     };
     return Hand;
 }());
+exports.Hand = Hand;
 var Computer = (function () {
     function Computer(myCardIndex1, myCardIndex2, emulationTimes, numberOfPlayers, considerSplitAsPartiallyWin) {
-        if (emulationTimes === void 0) { emulationTimes = 1000; }
+        if (emulationTimes === void 0) { emulationTimes = 10000; }
         if (numberOfPlayers === void 0) { numberOfPlayers = 2; }
         if (considerSplitAsPartiallyWin === void 0) { considerSplitAsPartiallyWin = true; }
         this.myCardIndex1 = myCardIndex1;
@@ -428,9 +428,11 @@ var Computer = (function () {
     /**
      * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
      * @returns {number}
+     * TODO(zzn): compute confidential interval, compute split ratio
      */
     Computer.prototype.computeEquity = function () {
         var winTimes = 0;
+        // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
         for (var i = 0; i < this.emulationTimes; i++) {
             var pickedCardIndices = Computer.randomlyPickCards((this.numberOfPlayers - 1) * 2 + 5, [this.myCardIndex1, this.myCardIndex2]);
             var communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) * 2); // last 5 cards as community cards;
@@ -450,12 +452,16 @@ var Computer = (function () {
                     var myCard1 = new Card(this.myCardIndex1);
                     var myCard2 = new Card(this.myCardIndex2);
                     var communityCards = communityCardIndices.map(function (i) { return new Card(i); });
-                    console.log("XXX DEBUG: My Cards: " + (myCard1.getNumberWithColorStr() + ' ' + myCard2.getNumberWithColorStr()));
-                    console.log("XXX DEBUG: O Cards: " + (oCard1.getNumberWithColorStr() + ' ' + oCard2.getNumberWithColorStr()));
-                    console.log("XXX DEBUG: Community Cards: " + communityCards.map(function (c) { return c.getNumberWithColorStr(); }).join(' '));
-                    console.log("XXX DEBUG: My Hand Type: " + HandType[myHand.getHandType()]);
-                    console.log("XXX DEBUG: O Hand Type: " + HandType[oHand.getHandType()]);
-                    console.log("XXX DEBUG: compare result = " + compareResult);
+                    if (compareResult < 1) {
+                        console.log("XXX DEBUG: Simulation #" + i);
+                        console.log("XXX DEBUG: My Cards: " + (myCard1.getNumberWithColorStr() + ' ' + myCard2.getNumberWithColorStr()));
+                        console.log("XXX DEBUG: O Cards: " + (oCard1.getNumberWithColorStr() + ' ' + oCard2.getNumberWithColorStr()));
+                        console.log("XXX DEBUG: Community Cards: " + communityCards.map(function (c) { return c.getNumberWithColorStr(); }).join(' '));
+                        console.log("XXX DEBUG: My Hand Type: " + HandType[myHand.getHandType()]);
+                        console.log("XXX DEBUG: O Hand Type: " + HandType[oHand.getHandType()]);
+                        console.log("XXX DEBUG: compare result = " + compareResult);
+                        console.log('');
+                    }
                 }
                 if (compareResult < 0) {
                     numOfSplit = 0;
@@ -463,10 +469,13 @@ var Computer = (function () {
                 }
                 if (compareResult == 0) {
                     // for split case, add one splitting player
-                    if (this.considerSplitAsPartiallyWin)
+                    if (this.considerSplitAsPartiallyWin) {
                         numOfSplit++;
-                    else
+                    }
+                    else {
                         numOfSplit = 0;
+                        break;
+                    }
                 }
             }
             if (numOfSplit > 0) {
@@ -496,62 +505,4 @@ var Computer = (function () {
     };
     return Computer;
 }());
-var computeCsvSheet = function () {
-    var suitedOdds = {};
-    var offSuitedOdds = {};
-    /**
-     * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
-     * bottom right is 22.
-     * First index is the row, and second index is the column
-     * @type {Array}
-     */
-    var sheet = [];
-    for (var i = 0; i < 13; i++) {
-        var row = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        sheet.push(row);
-    }
-    // Suited
-    for (var n1 = 12; n1 >= 0; n1--) {
-        for (var n2 = n1 - 1; n2 >= 0; n2--) {
-            var cardIndex1 = n1 * 4;
-            var cardIndex2 = n2 * 4;
-            var card1 = new Card(cardIndex1);
-            var card2 = new Card(cardIndex2);
-            var computer = new Computer(cardIndex1, cardIndex2);
-            var equity = computer.computeEquity();
-            suitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-            sheet[12 - n1][12 - n2] = equity;
-        }
-        console.log('XXX computed a line of suited odds, row card number = ' + n1);
-    }
-    // Off suited
-    for (var n1 = 12; n1 >= 0; n1--) {
-        for (var n2 = 12; n2 >= n1; n2--) {
-            var cardIndex1 = n1 * 4 + 1;
-            var cardIndex2 = n2 * 4;
-            var card1 = new Card(cardIndex1);
-            var card2 = new Card(cardIndex2);
-            var computer = new Computer(cardIndex1, cardIndex2);
-            var equity = computer.computeEquity();
-            offSuitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-            sheet[12 - n1][12 - n2] = equity;
-        }
-        console.log('XXX computed a line of off suited odds, row card number = ' + n1);
-    }
-    for (var i = 0; i < 13; i++) {
-        var row = '';
-        for (var j = 0; j < 13; j++) {
-            row = row + sheet[i][j] + ',';
-        }
-        console.log(row);
-    }
-};
-var computeSingle = function () {
-    var computer = new Computer(51, 46);
-    console.log('XXX Start computing equity of AKo in an headsup');
-    console.log(computer.computeEquity());
-};
-var main = function () {
-    computeSingle();
-};
-main();
+exports.Computer = Computer;
