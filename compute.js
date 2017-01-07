@@ -44,7 +44,7 @@ var Card = (function () {
     /**
      * Return the number of a card based on index
      * Card a 2 - 14 number representing 2, 3, ... T, J, Q, A,
-     * where the index of Card 2 is 0
+     * where the index of Card 2s is 0
      * the index of Card A is 12, in straight check Card A also has an index of -1
      * */
     Card.prototype.getNumber = function () {
@@ -52,7 +52,7 @@ var Card = (function () {
     }; //
     Card.prototype.getNumberStr = function () {
         var n = this.getNumber();
-        console.assert(n >= 0 && n <= 12, "n is incorrect, n = " + n);
+        exports.assert(n >= 0 && n <= 12, "n is incorrect, n = " + n);
         if (n < 8)
             return (n + 2).toString();
         else {

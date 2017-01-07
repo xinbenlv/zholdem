@@ -87,7 +87,7 @@ class HandTest {
   testLengthCheck() {
     flags.debugOn = true;
     try {
-      new Hand([1, 1, 2, 3, 4, 5]);
+      new Hand([1, 1, 2, 12, 45, 51]);
       assert(false, 'Test should fail.') ;
     } catch (reason) {
       assert(reason instanceof Error);
@@ -116,7 +116,7 @@ class HandTest {
     let handThreeOfAKind:Hand = new Hand([this.card2s, this.card2c, this.card2d, 5, 51, 46, 41]);
     let handTwoPair:Hand = new Hand([this.card2s, this.card2c, this.card3h, this.card3d, 51, 46, 41]);
     let handOnePair:Hand = new Hand([this.card2s, this.card2c, 51, 46, 41]);
-    let handHighCard:Hand = new Hand([this.card2s, 6/*2c*/, 51, 46, 41]);
+    let handHighCard:Hand = new Hand([this.card2s, 6, 51, 46, 41]);
     assert(handFlushStraight.getHandType() == HandType.FlushStraight);
     assert(handFourOfAKind.getHandType() == HandType.FourOfAKind);
     assert(handFullHouse.getHandType() == HandType.FullHouse);
@@ -136,5 +136,20 @@ class HandTest {
           `Compare failed, HandType ${orderList[i].getHandType()} 
           should breat ${orderList[i + 1].getHandType()} `);
     }
+  }
+
+  @test('should recognize 5 high straight correctly and compare it ' +
+      'correctly with other staright correctly.')
+  testRecognizeStraight() {
+    let handStraight6high:Hand = new Hand([
+      this.card2s, this.card3c, this.card4s,
+      this.card5c, this.card6h, this.cardKh, this.cardQc]);
+    let handStraight5high:Hand = new Hand([
+      this.card2s, this.card3c, this.card4s,
+      this.card5c, this.card9h, this.cardAh, this.cardQc]);
+    assert(handStraight6high.resultNumbers[0] == 4);
+    assert(handStraight5high.resultNumbers[0] == 3);
+    assert(handStraight6high.compareWith(handStraight5high) > 0,
+        '6 high straight should beat 5 high');
   }
 }

@@ -77,7 +77,7 @@ var HandTest = (function () {
     HandTest.prototype.testLengthCheck = function () {
         compute_1.flags.debugOn = true;
         try {
-            new compute_1.Hand([1, 1, 2, 3, 4, 5]);
+            new compute_1.Hand([1, 1, 2, 12, 45, 51]);
             chai_1.assert(false, 'Test should fail.');
         }
         catch (reason) {
@@ -109,7 +109,7 @@ var HandTest = (function () {
         var handThreeOfAKind = new compute_1.Hand([this.card2s, this.card2c, this.card2d, 5, 51, 46, 41]);
         var handTwoPair = new compute_1.Hand([this.card2s, this.card2c, this.card3h, this.card3d, 51, 46, 41]);
         var handOnePair = new compute_1.Hand([this.card2s, this.card2c, 51, 46, 41]);
-        var handHighCard = new compute_1.Hand([this.card2s, 6 /*2c*/, 51, 46, 41]);
+        var handHighCard = new compute_1.Hand([this.card2s, 6, 51, 46, 41]);
         chai_1.assert(handFlushStraight.getHandType() == compute_1.HandType.FlushStraight);
         chai_1.assert(handFourOfAKind.getHandType() == compute_1.HandType.FourOfAKind);
         chai_1.assert(handFullHouse.getHandType() == compute_1.HandType.FullHouse);
@@ -129,6 +129,19 @@ var HandTest = (function () {
             chai_1.assert(compareResult > 0, "Compare failed, HandType " + orderList[i].getHandType() + " \n          should breat " + orderList[i + 1].getHandType() + " ");
         }
     };
+    HandTest.prototype.testRecognizeStraight = function () {
+        var handStraight6high = new compute_1.Hand([
+            this.card2s, this.card3c, this.card4s,
+            this.card5c, this.card6h, this.cardKh, this.cardQc
+        ]);
+        var handStraight5high = new compute_1.Hand([
+            this.card2s, this.card3c, this.card4s,
+            this.card5c, this.card9h, this.cardAh, this.cardQc
+        ]);
+        chai_1.assert(handStraight6high.resultNumbers[0] == 4);
+        chai_1.assert(handStraight5high.resultNumbers[0] == 3);
+        chai_1.assert(handStraight6high.compareWith(handStraight5high) > 0, '6 high straight should beat 5 high');
+    };
     return HandTest;
 }());
 __decorate([
@@ -140,6 +153,10 @@ __decorate([
 __decorate([
     mocha_typescript_1.test('hand compare should correctly compare different card types.')
 ], HandTest.prototype, "testCompareDifferentTypes");
+__decorate([
+    mocha_typescript_1.test('should recognize 5 high straight correctly and compare it ' +
+        'correctly with other staright correctly.')
+], HandTest.prototype, "testRecognizeStraight");
 HandTest = __decorate([
     mocha_typescript_1.suite("Hand ")
 ], HandTest);
