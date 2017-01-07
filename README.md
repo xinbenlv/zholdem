@@ -7,6 +7,6 @@ npm run main
 To run test
 
 ```bash
-npm run test
+npm test
 ```
 ## Known Bug
