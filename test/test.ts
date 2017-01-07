@@ -1,5 +1,5 @@
 import {suite, test} from "mocha-typescript";
-import {Hand, flags, HandType} from "../compute";
+import {Hand, flags, HandType} from "../src/compute";
 import {assert} from "chai";
 
 //noinspection BadExpressionStatementJS
@@ -422,6 +422,7 @@ class HandTest {
         'AKQ975 should beat KQJ975');
   }
 
+  //noinspection JSUnusedGlobalSymbols
   @test('should correctly compare Ad Kh v 7s Ah given community cards 4h 4d 4c 9c 6c.')
   testSingleCase1() {
     // My Cards: Ad Kh
@@ -435,6 +436,7 @@ class HandTest {
     assert(myHand.compareWith(oHand) > 0);
   }
 
+  //noinspection JSUnusedGlobalSymbols
   @test('should correctly compare Ad Kh v Ts Ac given community cards 5s 6c Td 5d Kc.')
   testSingleCase2() {
     // My Cards: Ad Kh
@@ -448,6 +450,7 @@ class HandTest {
     assert(myHand.compareWith(oHand) > 0);
   }
 
+  //noinspection JSUnusedGlobalSymbols
   @test('should correctly compare Ad Kh v 5d 7s given community cards 9s 6d 4c 2d 4h.')
   testSingleCase3() {
     // My Cards: Ad(51) Kh(46)

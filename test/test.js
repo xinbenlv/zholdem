@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 var mocha_typescript_1 = require("mocha-typescript");
-var compute_1 = require("../compute");
+var compute_1 = require("../src/compute");
 var chai_1 = require("chai");
 //noinspection BadExpressionStatementJS
 var HandTest = (function () {
@@ -395,6 +395,7 @@ var HandTest = (function () {
         chai_1.assert(handKQJ97.resultNumbers[0] == 11);
         chai_1.assert(handAKQ97.compareWith(handKQJ97) > 0, 'AKQ975 should beat KQJ975');
     };
+    //noinspection JSUnusedGlobalSymbols
     HandTest.prototype.testSingleCase1 = function () {
         // My Cards: Ad Kh
         // O Cards: 7s Ah
@@ -406,6 +407,7 @@ var HandTest = (function () {
         var oHand = new compute_1.Hand([this.card7s, this.cardAh].concat(communityCards));
         chai_1.assert(myHand.compareWith(oHand) > 0);
     };
+    //noinspection JSUnusedGlobalSymbols
     HandTest.prototype.testSingleCase2 = function () {
         // My Cards: Ad Kh
         // O Cards: Ts Ac
@@ -417,6 +419,7 @@ var HandTest = (function () {
         var oHand = new compute_1.Hand([this.cardTs, this.cardAc].concat(communityCards));
         chai_1.assert(myHand.compareWith(oHand) > 0);
     };
+    //noinspection JSUnusedGlobalSymbols
     HandTest.prototype.testSingleCase3 = function () {
         // My Cards: Ad(51) Kh(46)
         // O Cards: 5d(15) 7s(20)

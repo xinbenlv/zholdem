@@ -11,7 +11,7 @@
     "typescript": "^2.1.4"
   },
   "scripts": {
-    "main": "tsc -p . && node main.js",
+    "main": "tsc -p . && node src/main.js",
     "test": "tsc -p . && mocha",
     "dev-test-watch": "mocha-typescript-watch"
   },
