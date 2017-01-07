@@ -6,3 +6,8 @@ os:
   - linux
 script:
   - npm run test
+after_success:
+  - npm run coveralls
+addons:
+    code_climate:
+        repo_token: 189f6b7e6a00335fd185af20a0ae3a620468485e915b8c531b3b4cce7ee75f5c

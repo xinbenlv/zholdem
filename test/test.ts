@@ -1,5 +1,5 @@
 import {suite, test} from "mocha-typescript";
-import {Hand, HandType} from "../src/compute";
+import {Hand, HandType} from "../src/hand";
 import {assert} from "chai";
 import {DevTool} from "../src/dev_tool";
 

@@ -6,14 +6,19 @@
   "dependencies": {},
   "devDependencies": {
     "chai": "^3.5.0",
+    "coveralls": "^2.11.15",
+    "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
+    "mocha-lcov-reporter": "^1.2.0",
     "mocha-typescript": "^1.0.15",
     "typescript": "^2.1.4"
   },
   "scripts": {
     "main": "tsc -p . && node src/main.js",
     "test": "tsc -p . && mocha",
-    "dev-test-watch": "mocha-typescript-watch"
+    "test-watch": "mocha-typescript-watch",
+    "cover": "istanbul cover _mocha -- -R spec",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
