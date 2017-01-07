@@ -1,6 +1,6 @@
-/// <reference path='compute.ts'/>
-
-import {Card, Computer, Hand, HandType, EquitySimulationResult} from "./compute";
+import {Simulator, EquitySimulationResult} from "./simulator";
+import {Card} from "./card";
+import {Hand, HandType} from "./hand";
 
 class PercentageEntry {
   public simulationResult:EquitySimulationResult;
@@ -29,7 +29,7 @@ let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000
     for (let n2=n1-1; n2 >= 0; n2 --) {
       let cardIndex1 = n1 * 4;
       let cardIndex2 = n2 * 4;
-      let computer = new Computer(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
+      let computer = new Simulator(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
       let equityResult:EquitySimulationResult = computer.computeEquity();
       sheet[12 - n1][12 - n2] = equityResult;
     }
@@ -41,7 +41,7 @@ let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000
     for (let n2 = 12; n2 >= n1; n2 --) {
       let cardIndex1 = n1 * 4 + 1;
       let cardIndex2 = n2 * 4;
-      let computer = new Computer(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
+      let computer = new Simulator(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
       let equityResult:EquitySimulationResult = computer.computeEquity();
       sheet[12 - n1][12 - n2] = equityResult;
     }
@@ -117,22 +117,22 @@ let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000
 
 let compute22v33 = function():void {
   console.log(`XXX DEBG starting 22o v 33o 10000 times for 9 players`);
-  let computer:Computer;
-  computer = new Computer(0, 1,10000,9);
+  let computer:Simulator;
+  computer = new Simulator(0, 1,10000,9);
   console.log('XXX Start computing equity of 22o in an headsup');
   console.log(computer.computeEquity());
-  computer = new Computer(4, 5,10000,9);
+  computer = new Simulator(4, 5,10000,9);
   console.log('XXX Start computing equity of 33o in an headsup');
   console.log(computer.computeEquity());
 };
 let computeSingleCellEquity = function():void {
-  let computer:Computer = new Computer(0, 1);
+  let computer:Simulator = new Simulator(0, 1);
   console.log('XXX Start computing equity of AKo in an headsup');
   console.log(computer.computeEquity());
 };
 
 let computeA2O_6p = function():void {
-  let computer:Computer = new Computer(51, 0, 20, 6); // A2o
+  let computer:Simulator = new Simulator(51, 0, 20, 6); // A2o
   console.log('XXX Start computing equity of AKo in an headsup');
   console.log(computer.computeEquity());
 };

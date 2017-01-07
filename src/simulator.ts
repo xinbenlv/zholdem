@@ -47,7 +47,7 @@ export class EquitySimulationResult {
   public totalEquityStD:number;
 }
 
-export class Computer {
+export class Simulator {
   constructor(
       private myCardIndex1,
       private myCardIndex2,
@@ -70,7 +70,7 @@ export class Computer {
     let splitRates:number[] = new Array(this.numberOfPlayers + 1);
     let splitEquities = new Array<number>(this.numberOfPlayers + 1);
     for (let i = 0 ; i < this.emulationTimes; i++) {
-      let pickedCardIndices = Computer.randomlyPickCards(
+      let pickedCardIndices = Simulator.randomlyPickCards(
           (this.numberOfPlayers - 1) * 2 + 5,
           [this.myCardIndex1, this.myCardIndex2]);
 
