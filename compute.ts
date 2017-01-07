@@ -1,6 +1,6 @@
 
 export let flags = {
-  debugOn : true
+  debugOn : false
 };
 
 export let assert = function(assertionBoolean, reason?:string) {
@@ -481,7 +481,7 @@ export class Computer {
       private emulationTimes = 10000,
       private numberOfPlayers = 2) {
     assert(myCardIndex2 != myCardIndex1, 'Initial cards should not be the same.');
-    assert(numberOfPlayers <= 0 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
+    assert(numberOfPlayers <= 10 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
   }
 
   /**

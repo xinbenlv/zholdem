@@ -422,4 +422,43 @@ class HandTest {
         'AKQ975 should beat KQJ975');
   }
 
+  @test('should correctly compare Ad Kh v 7s Ah given community cards 4h 4d 4c 9c 6c.')
+  testSingleCase1() {
+    // My Cards: Ad Kh
+    // O Cards: 7s Ah
+    // Community Cards: 4h 4d 4c 9c 6c
+    // My Hand Type: ThreeOfAKind
+    // O Hand Type: ThreeOfAKind
+    let communityCards = [this.card4h, this.card4d, this.card4c, this.card9c, this.card6c];
+    let myHand:Hand = new Hand([this.cardAd, this.cardKh].concat(communityCards));
+    let oHand:Hand = new Hand([this.card7s, this.cardAh].concat(communityCards));
+    assert(myHand.compareWith(oHand) > 0);
+  }
+
+  @test('should correctly compare Ad Kh v Ts Ac given community cards 5s 6c Td 5d Kc.')
+  testSingleCase2() {
+    // My Cards: Ad Kh
+    // O Cards: Ts Ac
+    // Community Cards: 5s 6c Td 5d Kc
+    // My Hand Type: TwoPairs
+    // O Hand Type: TwoPairs
+    let communityCards = [this.card5s, this.card6c, this.cardTd, this.card5d, this.cardKc];
+    let myHand:Hand = new Hand([this.cardAd, this.cardKh].concat(communityCards));
+    let oHand:Hand = new Hand([this.cardTs, this.cardAc].concat(communityCards));
+    assert(myHand.compareWith(oHand) > 0);
+  }
+
+  @test('should correctly compare Ad Kh v 5d 7s given community cards 9s 6d 4c 2d 4h.')
+  testSingleCase3() {
+    // My Cards: Ad(51) Kh(46)
+    // O Cards: 5d(15) 7s(20)
+    // Community Cards: 9s(28) 6d(19) 4c(9) 2d(3) 4h(10)
+    // My Hand Type: OnePair
+    // O Hand Type: OnePair
+    let communityCards = [this.card9s, this.card6d, this.card4c, this.card2d, this.card4h];
+    let myHand:Hand = new Hand([this.cardAd, this.cardKh].concat(communityCards));
+    let oHand:Hand = new Hand([this.card5d, this.card7s].concat(communityCards));
+    assert(myHand.compareWith(oHand) > 0);
+  }
+
 }

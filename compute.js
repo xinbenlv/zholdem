@@ -1,6 +1,6 @@
 "use strict";
 exports.flags = {
-    debugOn: true
+    debugOn: false
 };
 exports.assert = function (assertionBoolean, reason) {
     if (!assertionBoolean) {
@@ -453,7 +453,7 @@ var Computer = (function () {
         this.emulationTimes = emulationTimes;
         this.numberOfPlayers = numberOfPlayers;
         exports.assert(myCardIndex2 != myCardIndex1, 'Initial cards should not be the same.');
-        exports.assert(numberOfPlayers <= 0 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
+        exports.assert(numberOfPlayers <= 10 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
     }
     /**
      * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
