@@ -1,0 +1,31 @@
+{
+  "name": "holdem-heatmap",
+  "version": "1.0.0",
+  "description": "A library for computing holdem hands",
+  "main": "main.js",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "mocha-typescript": "^1.0.15",
+    "typescript": "^2.1.4"
+  },
+  "scripts": {
+    "test": "tsc -p . && mocha",
+    "dev-test-watch": "mocha-typescript-watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xinbenlv/zholdem.git"
+  },
+  "keywords": [
+    "Hold'em",
+    "Holdem",
+    "Poker"
+  ],
+  "author": "Zainan Victor Zhou",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xinbenlv/zholdem/issues"
+  },
+  "homepage": "https://github.com/xinbenlv/zholdem#readme"
+}

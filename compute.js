@@ -10,6 +10,7 @@ var EquitySimulationResult = (function () {
     return EquitySimulationResult;
 }());
 exports.EquitySimulationResult = EquitySimulationResult;
+var HandType;
 (function (HandType) {
     HandType[HandType["FlushStraight"] = 9] = "FlushStraight";
     HandType[HandType["FourOfAKind"] = 8] = "FourOfAKind";
@@ -20,15 +21,14 @@ exports.EquitySimulationResult = EquitySimulationResult;
     HandType[HandType["TwoPairs"] = 3] = "TwoPairs";
     HandType[HandType["OnePair"] = 2] = "OnePair";
     HandType[HandType["HighCard"] = 1] = "HighCard";
-})(exports.HandType || (exports.HandType = {}));
-var HandType = exports.HandType;
+})(HandType = exports.HandType || (exports.HandType = {}));
+var Color;
 (function (Color) {
     Color[Color["Spade"] = 0] = "Spade";
     Color[Color["Club"] = 1] = "Club";
     Color[Color["Heart"] = 2] = "Heart";
     Color[Color["Diamond"] = 3] = "Diamond";
-})(exports.Color || (exports.Color = {}));
-var Color = exports.Color;
+})(Color = exports.Color || (exports.Color = {}));
 var Card = (function () {
     function Card(index) {
         this.index = index;
@@ -359,7 +359,7 @@ var Hand = (function () {
     };
     Hand.prototype.isOnePair = function () {
         var numberSet = {};
-        var _loop_1 = function(myCard) {
+        var _loop_1 = function (myCard) {
             if (numberSet[myCard.getNumber()] === undefined)
                 numberSet[myCard.getNumber()] = 1;
             else
@@ -378,7 +378,8 @@ var Hand = (function () {
         for (var _i = 0, _a = this.myCards; _i < _a.length; _i++) {
             var myCard = _a[_i];
             var state_1 = _loop_1(myCard);
-            if (typeof state_1 === "object") return state_1.value;
+            if (typeof state_1 === "object")
+                return state_1.value;
         }
         return false;
     };
