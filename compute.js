@@ -332,10 +332,10 @@ var Hand = (function () {
             if (numberSet[key] >= 3) {
                 result = true;
                 if (currentTopCardNumber == null)
-                    currentTopCardNumber = numberSet[key];
+                    currentTopCardNumber = parseInt(key);
                 else {
-                    currentTopCardNumber = currentTopCardNumber > numberSet[key] ?
-                        currentTopCardNumber : numberSet[key];
+                    currentTopCardNumber = currentTopCardNumber > parseInt(key) ?
+                        currentTopCardNumber : parseInt(key);
                 }
             }
         }

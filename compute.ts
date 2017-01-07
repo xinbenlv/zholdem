@@ -368,10 +368,10 @@ export class Hand {
     for (let key in numberSet) {
       if (numberSet[key] >= 3) {
         result = true;
-        if (currentTopCardNumber == null) currentTopCardNumber = numberSet[key];
+        if (currentTopCardNumber == null) currentTopCardNumber = parseInt(key);
         else {
-          currentTopCardNumber = currentTopCardNumber > numberSet[key] ?
-              currentTopCardNumber : numberSet[key];
+          currentTopCardNumber = currentTopCardNumber > parseInt(key) ?
+              currentTopCardNumber : parseInt(key);
         }
       }
     }
