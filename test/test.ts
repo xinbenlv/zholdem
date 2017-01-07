@@ -1,6 +1,7 @@
 import {suite, test} from "mocha-typescript";
-import {Hand, flags, HandType} from "../src/compute";
+import {Hand, HandType} from "../src/compute";
 import {assert} from "chai";
+import {DevTool} from "../src/dev_tool";
 
 //noinspection BadExpressionStatementJS
 @suite("Hand ")
@@ -74,7 +75,7 @@ class HandTest {
   //noinspection JSUnusedGlobalSymbols,JSMethodCanBeStatic
   @test('creation should avoid duplications.')
   testDuplicationCheck() {
-    flags.debugOn = true; // need the thrown exceptions
+    DevTool.flags.debugOn = true; // need the thrown exceptions
     try {
       new Hand([1, 1, 2, 3, 4, 5]);
       assert(false, 'Test should fail.') ;
@@ -88,7 +89,7 @@ class HandTest {
   //noinspection JSUnusedGlobalSymbols,JSMethodCanBeStatic
   @test('creation should avoid any hand that is less than 5 cards.')
   testLengthCheck() {
-    flags.debugOn = true;  // need the thrown exceptions
+    DevTool.flags.debugOn = true;  // need the thrown exceptions
     try {
       new Hand([1, 1, 2, 12, 45, 51]);
       assert(false, 'Test should fail.') ;
