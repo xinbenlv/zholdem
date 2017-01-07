@@ -1,5 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea
+.vscode
 # compute.js
 node_modules
 npm-debug.log
+
