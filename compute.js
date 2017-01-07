@@ -459,8 +459,8 @@ var Computer = (function () {
      * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
      * @returns {number}
      *
-     * TODO(zzn):
-     *  - extract parameters to a separate functions for more players, more known cards and more range
+     * TODO(zzn): extract parameters to a separate functions for more players,
+     *            more known cards and more range
      */
     Computer.prototype.computeEquity = function () {
         var splitTimes = new Array(this.numberOfPlayers + 1);

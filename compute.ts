@@ -488,8 +488,8 @@ export class Computer {
    * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
    * @returns {number}
    *
-   * TODO(zzn):
-   *  - extract parameters to a separate functions for more players, more known cards and more range
+   * TODO(zzn): extract parameters to a separate functions for more players,
+   *            more known cards and more range
    */
   computeEquity():EquitySimulationResult {
     let splitTimes:number[] = new Array(this.numberOfPlayers + 1);
