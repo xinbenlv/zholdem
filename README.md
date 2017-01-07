@@ -2,8 +2,7 @@
 
 ## Build Status
 [![Build Status](https://travis-ci.org/xinbenlv/zholdem.svg?branch=master)](https://travis-ci.org/xinbenlv/zholdem)
-[![Test Coverage](https://codeclimate.com/github/xinbenlv/zholdem/badges/coverage.svg)](https://codeclimate.com/github/xinbenlv/zholdem/coverage)
-[![Code Climate](https://codeclimate.com/github/xinbenlv/zholdem/badges/gpa.svg)](https://codeclimate.com/github/xinbenlv/zholdem)
+[![Coverage Status](https://coveralls.io/repos/github/xinbenlv/zholdem/badge.svg?branch=master)](https://coveralls.io/github/xinbenlv/zholdem?branch=master)
 
 ## Quick Start
 To run this program, do 
