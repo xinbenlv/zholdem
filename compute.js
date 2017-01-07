@@ -4,6 +4,12 @@ Object.prototype['sortAsIntegerArray'] = function () {
     // assumming this is an Array<number>
     return this.sort(function (a, b) { return a - b; });
 };
+var EquitySimulationResult = (function () {
+    function EquitySimulationResult() {
+    }
+    return EquitySimulationResult;
+}());
+exports.EquitySimulationResult = EquitySimulationResult;
 (function (HandType) {
     HandType[HandType["FlushStraight"] = 9] = "FlushStraight";
     HandType[HandType["FourOfAKind"] = 8] = "FourOfAKind";
@@ -413,15 +419,13 @@ var Hand = (function () {
 }());
 exports.Hand = Hand;
 var Computer = (function () {
-    function Computer(myCardIndex1, myCardIndex2, emulationTimes, numberOfPlayers, considerSplitAsPartiallyWin) {
+    function Computer(myCardIndex1, myCardIndex2, emulationTimes, numberOfPlayers) {
         if (emulationTimes === void 0) { emulationTimes = 10000; }
         if (numberOfPlayers === void 0) { numberOfPlayers = 2; }
-        if (considerSplitAsPartiallyWin === void 0) { considerSplitAsPartiallyWin = true; }
         this.myCardIndex1 = myCardIndex1;
         this.myCardIndex2 = myCardIndex2;
         this.emulationTimes = emulationTimes;
         this.numberOfPlayers = numberOfPlayers;
-        this.considerSplitAsPartiallyWin = considerSplitAsPartiallyWin;
         console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
         // TODO(zzn): add more validation
     }
@@ -431,7 +435,11 @@ var Computer = (function () {
      * TODO(zzn): compute confidential interval, compute split ratio
      */
     Computer.prototype.computeEquity = function () {
-        var winTimes = 0;
+        var splitTimes = new Array(this.numberOfPlayers + 1);
+        for (var i = 0; i <= this.numberOfPlayers; i++)
+            splitTimes[i] = 0;
+        var splitRates = new Array(this.numberOfPlayers + 1);
+        var splitEquities = new Array(this.numberOfPlayers + 1);
         // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
         for (var i = 0; i < this.emulationTimes; i++) {
             var pickedCardIndices = Computer.randomlyPickCards((this.numberOfPlayers - 1) * 2 + 5, [this.myCardIndex1, this.myCardIndex2]);
@@ -464,25 +472,35 @@ var Computer = (function () {
                     }
                 }
                 if (compareResult < 0) {
-                    numOfSplit = 0;
-                    break; // lost already
+                    numOfSplit = 0; // reset to 0 because HERO lost
+                    break; // lost already, stop continue computing
                 }
                 if (compareResult == 0) {
                     // for split case, add one splitting player
-                    if (this.considerSplitAsPartiallyWin) {
-                        numOfSplit++;
-                    }
-                    else {
-                        numOfSplit = 0;
-                        break;
-                    }
+                    numOfSplit++;
                 }
             }
-            if (numOfSplit > 0) {
-                winTimes += 1 / numOfSplit;
-            }
+            splitTimes[numOfSplit]++;
         }
-        return winTimes / this.emulationTimes;
+        var result = new EquitySimulationResult();
+        for (var i = 0; i <= this.numberOfPlayers /*yes it is LTE(<=) */; i++) {
+            splitRates[i] = splitTimes[i] / this.emulationTimes;
+            if (i > 0)
+                splitEquities[i] = splitRates[i] / i;
+        }
+        result.splitRates = splitRates;
+        result.splitTimes = splitTimes;
+        result.splitEquities = splitEquities;
+        result.totalEquity = splitEquities.reduce(function (a, b) { return a + b; });
+        var tmp = 0;
+        for (var i = 0; i <= this.numberOfPlayers /*yes it LTE(<=)*/; i++) {
+            if (i == 0)
+                tmp = tmp + result.totalEquity ^ 2 + splitTimes[i];
+            else
+                tmp = tmp + (splitRates[i] - result.totalEquity) ^ 2 * splitTimes[i];
+        }
+        result.totalEquityStD = Math.sqrt(tmp / (this.emulationTimes * (this.emulationTimes - 1)));
+        return result;
     };
     /**
      * Randomly picks a number of cards from a suit of poker, 52 cards, does not contain the jokers.

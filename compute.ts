@@ -3,6 +3,50 @@ Object.prototype['sortAsIntegerArray'] = function() {
   // assumming this is an Array<number>
   return this.sort((a,b) => a-b);
 };
+export class EquitySimulationResult {
+
+  /**
+   * An array of all ratio of split in the size of number of players
+   *
+   * Index = NumberOfPlayersSplit the number of player the HERO split with, 0 means HERO lost
+   */
+  public splitRates:number[];
+
+  /**
+   * An array of all number of times of split in the size of number of players
+   *
+   * Index = NumberOfPlayersSplit, 0 means HERO lost
+   */
+  public splitTimes:number[];
+
+  /**
+   * a double between 0 and 1 describing the probability the hand splitting the pot with other player
+   * assuming 10% of time the player will split a pot with another player,
+   * the {splitEquity} = 0.05 = 10% / 2
+   *
+   * Index = NumberOfPlayersSplit, 0 means HERO lost
+   */
+  public splitEquities:number[];
+
+  /**
+   * splitInMRate = splitRates[M -1];
+   * totalEquity = splitIn1Rate / 1 + splitIn2Rate / 2 + ... splitIn9Rate / 9
+   */
+  public totalEquity:number;
+
+  /**
+   * (
+   *    (splitIn2Rate / 1 - totalEquity)^2 * splitIn1Rate * N +
+   *    (splitIn2Rate / 2 - totalEquity)^2 * splitIn2Rate * N +
+   *    (splitIn2Rate / 3 - totalEquity)^2 * splitIn3Rate * N +
+   *    ...
+   *    (splitIn2Rate / 9 - totalEquity)^2 * splitIn9Rate * N +
+   *
+   *    (totalEquity - 0)^2 * (1 - Sum(all split rate)) * N +
+   * ) ^ 0.5 / (n-1)^0.5
+   */
+  public totalEquityStD:number;
+}
 export enum HandType {
   FlushStraight = 9,
   FourOfAKind = 8,
@@ -402,8 +446,7 @@ export class Computer {
       private myCardIndex1,
       private myCardIndex2,
       private emulationTimes = 10000,
-      private numberOfPlayers = 2,
-      private considerSplitAsPartiallyWin = true) {
+      private numberOfPlayers = 2) {
     console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
     // TODO(zzn): add more validation
   }
@@ -413,8 +456,12 @@ export class Computer {
    * @returns {number}
    * TODO(zzn): compute confidential interval, compute split ratio
    */
-  computeEquity():number {
-    let winTimes = 0;
+  computeEquity():EquitySimulationResult {
+    let splitTimes:number[] = new Array(this.numberOfPlayers + 1);
+    for (let i = 0; i <= this.numberOfPlayers; i++) splitTimes[i] = 0;
+    let splitRates:number[] = new Array(this.numberOfPlayers + 1);
+    let splitEquities = new Array<number>(this.numberOfPlayers + 1);
+
     // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
     for (let i = 0 ; i < this.emulationTimes; i++) {
       let pickedCardIndices = Computer.randomlyPickCards(
@@ -450,26 +497,33 @@ export class Computer {
           }
         }
 
-
         if (compareResult < 0) {
-          numOfSplit = 0;
-          break; // lost already
+          numOfSplit = 0; // reset to 0 because HERO lost
+          break; // lost already, stop continue computing
         } if (compareResult == 0) {
           // for split case, add one splitting player
-          if (this.considerSplitAsPartiallyWin) {
-            numOfSplit ++;
-          }
-          else {
-            numOfSplit = 0;
-            break;
-          }
+          numOfSplit ++;
         }
+        // We don't count win because you will have to win everyone to get the pool
       }
-      if (numOfSplit > 0) {
-        winTimes += 1 / numOfSplit;
-      }
+      splitTimes[numOfSplit] ++;
     }
-    return winTimes / this.emulationTimes;
+    let result = new EquitySimulationResult();
+    for (let i = 0; i <= this.numberOfPlayers /*yes it is LTE(<=) */ ; i++) {
+      splitRates[i] = splitTimes[i] / this.emulationTimes;
+      if (i > 0) splitEquities[i] = splitRates[i] / i;
+    }
+    result.splitRates = splitRates;
+    result.splitTimes = splitTimes;
+    result.splitEquities = splitEquities;
+    result.totalEquity = splitEquities.reduce((a, b) => a + b);
+    let tmp = 0;
+    for (let i = 0; i <= this.numberOfPlayers /*yes it LTE(<=)*/ ; i++) {
+      if (i == 0) tmp = tmp + result.totalEquity^2 + splitTimes[i];
+      else tmp = tmp + (splitRates[i] - result.totalEquity)^2 * splitTimes[i];
+    }
+    result.totalEquityStD = Math.sqrt(tmp / (this.emulationTimes * (this.emulationTimes - 1)));
+    return result;
   }
 
   /**

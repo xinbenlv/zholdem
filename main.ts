@@ -1,21 +1,27 @@
 /// <reference path='compute.ts'/>
 
-import {Card, Color, Computer, Hand, HandType} from "./compute";
+import {Card, Computer, Hand, HandType, EquitySimulationResult} from "./compute";
 
-let computeCsvSheet = function(numberOfPlayer:number = 2):void {
-  let simTimes = 10000;
-  let suitedOdds:{[indices:string]:number} = {};
-  let offSuitedOdds:{[indices:string]:number} = {};
+class PercentageEntry {
+  public simulationResult:EquitySimulationResult;
+  public positionInSheetI:number;
+  public positionInSheetJ:number;
+  public numberOfEquivalentHands:number;
+  public handsBeat:number;
+}
+let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 10009):void {
   /**
    * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
    * bottom right is 22.
    * First index is the row, and second index is the column
    * @type {Array}
    */
-  let sheet:number[][] = [];
+  let sheet:EquitySimulationResult[][] = [];
+  let percentageSheet:PercentageEntry[][] = [];
   for (let i = 0; i < 13; i++) {
-    let row = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+    let row = new Array<EquitySimulationResult>(13);
     sheet.push(row);
+    percentageSheet.push(new Array<PercentageEntry>(13));
   }
 
   // Suited
@@ -23,12 +29,9 @@ let computeCsvSheet = function(numberOfPlayer:number = 2):void {
     for (let n2=n1-1; n2 >= 0; n2 --) {
       let cardIndex1 = n1 * 4;
       let cardIndex2 = n2 * 4;
-      let card1:Card = new Card(cardIndex1);
-      let card2:Card = new Card(cardIndex2);
       let computer = new Computer(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
-      let equity:number = computer.computeEquity();
-      suitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-      sheet[12 - n1][12 - n2] = equity;
+      let equityResult:EquitySimulationResult = computer.computeEquity();
+      sheet[12 - n1][12 - n2] = equityResult;
     }
     console.log('XXX computed a line of suited odds, row card number = ' + n1);
   }
@@ -38,36 +41,92 @@ let computeCsvSheet = function(numberOfPlayer:number = 2):void {
     for (let n2 = 12; n2 >= n1; n2 --) {
       let cardIndex1 = n1 * 4 + 1;
       let cardIndex2 = n2 * 4;
-      let card1:Card = new Card(cardIndex1);
-      let card2:Card = new Card(cardIndex2);
       let computer = new Computer(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
-      let equity:number = computer.computeEquity();
-      offSuitedOdds[card1.getNumberStr() + card2.getNumberStr()] = equity;
-      sheet[12 - n1][12 - n2] = equity;
+      let equityResult:EquitySimulationResult = computer.computeEquity();
+      sheet[12 - n1][12 - n2] = equityResult;
     }
     console.log('XXX computed a line of off suited odds, row card number = ' + n1);
   }
-  console.log('Equity Ratio');
+
+  console.log(''); // newline
+  console.log('Total Equity');
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
-      row = row + sheet[i][j] + ',';
+      row = row + sheet[i][j].totalEquity.toFixed(4) + ',';
     }
     console.log(row);
   }
-  console.log('Percentage Ahead Compare To Average of All');
 
+  console.log(''); // newline
+  console.log('Total Equity Confidential Interval of 95% (2*Sigma)');
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
-      row = row + (sheet[i][j] * numberOfPlayer - 1) * 100 + '%,';
+      row = row + (sheet[i][j].totalEquityStD * 2).toFixed(4) + ',';
+    }
+    console.log(row);
+  }
+
+  console.log(''); // newline
+  console.log('Total Equity Over Average Of Players');
+  for (let i = 0; i < 13; i++) {
+    let row = '';
+    for (let j = 0; j < 13; j++) {
+      row = row + ((sheet[i][j].totalEquity * numberOfPlayer - 1) * 100.0).toFixed(2) + '%,';
+    }
+    console.log(row);
+  }
+
+  // Compute top percentage;
+  let handRanks = [];
+  for (let i = 0; i < 13; i++ ){
+    for (let j = 0; j < 13; j++) {
+      let p = new PercentageEntry();
+      p.positionInSheetI = i;
+      p.positionInSheetJ = j;
+      if (i == j) p.numberOfEquivalentHands = 6;
+      else if (j > i) p.numberOfEquivalentHands = 4;
+      else if (j < i) p.numberOfEquivalentHands = 12;
+      p.simulationResult = sheet[i][j];
+      handRanks.push(p);
+      percentageSheet[i][j] = p;
+    }
+  }
+
+  handRanks.sort((p1, p2) => {
+    return p1.simulationResult.totalEquity - p2.simulationResult.totalEquity;
+  }).reverse();
+
+  let currentHandsBeat = 1326;
+  for (let p of handRanks) {
+    p.handsBeat = currentHandsBeat - p.numberOfEquivalentHands;
+    currentHandsBeat -= p.numberOfEquivalentHands;
+  }
+
+  console.log(''); // newline
+  console.log('Percentage Map');
+  for (let i = 0; i < 13; i++) {
+    let row = '';
+    for (let j = 0; j < 13; j++) {
+      row = row + (percentageSheet[i][j].handsBeat / 1326 * 100).toFixed(2) + '%,';
     }
     console.log(row);
   }
 };
 
+let compute22v33 = function():void {
+  console.log(`XXX DEBG starting 22o v 33o 10000 times for 9 players`);
+  let computer:Computer;
+  computer = new Computer(0, 1,10000,9);
+  console.log('XXX Start computing equity of 22o in an headsup');
+  console.log(computer.computeEquity());
+  computer = new Computer(4, 5,10000,9);
+  console.log('XXX Start computing equity of 33o in an headsup');
+  console.log(computer.computeEquity());
+};
 let computeSingleCellEquity = function():void {
-  let computer:Computer = new Computer(51, 46);
+  let computer:Computer = new Computer(0, 1);
   console.log('XXX Start computing equity of AKo in an headsup');
   console.log(computer.computeEquity());
 };
@@ -94,8 +153,7 @@ let computeSingleHand = function():void {
 };
 
 let main = function():void {
-  console.log(`XXX DEBG starting player 9`);
-  computeCsvSheet(9);
+  computeCsvSheet();
 };
 
 main();
