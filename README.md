@@ -13,7 +13,8 @@ npm run main
 
 To run test
 ```bash
-npm test
+npm test # just test
+npm run cover # test with coverage
 ```
 
 ## Known Bugs
