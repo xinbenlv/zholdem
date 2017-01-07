@@ -137,6 +137,10 @@ export class Card {
     return str;
   }
 
+  toString(): string {
+    return this.getNumberWithColorStr();
+  }
+
   getColor(): Color {
     switch(this.index % 4) {
       case 0:
@@ -155,7 +159,7 @@ export class Hand {
   /**
    * Indices of the 7 cards that I have.
    */
-  public myCards:Card[]; // TODO temp open to Card
+  public myCards:Card[];
 
   /**
    *   card indices for detail comparison
@@ -164,7 +168,7 @@ export class Hand {
   private handType:HandType;
 
   constructor(myCardIndices:number[]) {
-    if (true || flags.debugOn) {
+    if (flags.debugOn) {
       assert(myCardIndices.length >= 5,
           `There should be at least 5 cards, but only is ${myCardIndices.length}.`);
       let s = {};
@@ -283,22 +287,34 @@ export class Hand {
       if (numberSet[myCard.getNumber()] === undefined) numberSet[myCard.getNumber()] = 1;
       else numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
     }
-    let hasPair:boolean = false;
-    let hasThreeOfAKind:boolean = false;
-    for (let key in numberSet) {
-      if (numberSet[key] == 3) {
-        hasThreeOfAKind = true;
-        houseIndex = parseInt(key);
+
+    // TODO(zzn): The following logic might be shared by FullHouse and TwoPairs, pick and pick
+
+    // First pick a largest house
+    let currentLargestHouseNumber:number = null;
+    Object.keys(numberSet).forEach((keyStr) =>{
+      if (numberSet[keyStr] >= 3) {
+        let key = parseInt(keyStr);
+        if (currentLargestHouseNumber == null || currentLargestHouseNumber <= key)
+          currentLargestHouseNumber = key;
       }
-      else if (numberSet[key] == 2) {
-        hasPair = true;
-        pairIndex = parseInt(key);
+    });
+
+    // Then pick a largest pair
+    let currentLargestPairNumber:number = null;
+    Object.keys(numberSet).forEach((keyStr) =>{
+      if (parseInt(keyStr) != currentLargestHouseNumber && numberSet[keyStr] >= 2) {
+        let key = parseInt(keyStr);
+        if (
+            currentLargestPairNumber == null || currentLargestPairNumber <= key)
+          currentLargestPairNumber = key;
       }
+    });
+    if (currentLargestPairNumber != null && currentLargestHouseNumber != null) {
+      this.resultNumbers = [currentLargestHouseNumber, currentLargestPairNumber];
+      return true;
     }
-    if (hasPair && hasThreeOfAKind) {
-      this.resultNumbers = [houseIndex, pairIndex];
-    }
-    return hasPair && hasThreeOfAKind;
+    return false;
   }
   
   private isFlush(): boolean {
@@ -323,11 +339,6 @@ export class Hand {
     return isFlush;
   }
 
-  // TODO test-cases
-  //   AKQJT98, top card A
-  //   A2345 89, top card 5
-  //   A 34567 9, top card 7
-  //   345678 JQ, top card 8
   isStraight():boolean {
     let numberSet = {};
     let highCardIndex:number = null;
@@ -342,7 +353,7 @@ export class Hand {
     }
     let countConsecutive = 1;
     for (let i = 1; i < numbers.length; i++) {
-      if (numbers[i] - numbers[i - 1] == 1) { // TODO(zzn): also handle AKQJT and A2345 cases
+      if (numbers[i] - numbers[i - 1] == 1) {
         countConsecutive ++;
 
       } else countConsecutive = 1;
@@ -355,8 +366,6 @@ export class Hand {
     return result;
   }
 
-  // TODO test casse:
-  //   AAAKKKQQ, resultNumbers should be AK
   private isThreeOfAKind(): boolean {
     let numberSet = {};
     let currentTopCardNumber:number = null;
@@ -471,27 +480,30 @@ export class Computer {
       private myCardIndex2,
       private emulationTimes = 10000,
       private numberOfPlayers = 2) {
-    console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
-    // TODO(zzn): add more validation
+    assert(myCardIndex2 != myCardIndex1, 'Initial cards should not be the same.');
+    assert(numberOfPlayers <= 0 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
   }
 
   /**
    * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
    * @returns {number}
-   * TODO(zzn): compute confidential interval, compute split ratio
+   *
+   * TODO(zzn):
+   *  - extract parameters to a separate functions for more players, more known cards and more range
    */
   computeEquity():EquitySimulationResult {
     let splitTimes:number[] = new Array(this.numberOfPlayers + 1);
     for (let i = 0; i <= this.numberOfPlayers; i++) splitTimes[i] = 0;
     let splitRates:number[] = new Array(this.numberOfPlayers + 1);
     let splitEquities = new Array<number>(this.numberOfPlayers + 1);
-
-    // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
     for (let i = 0 ; i < this.emulationTimes; i++) {
       let pickedCardIndices = Computer.randomlyPickCards(
           (this.numberOfPlayers - 1) * 2 + 5,
           [this.myCardIndex1, this.myCardIndex2]);
-      let communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) *2); // last 5 cards as community cards;
+
+      // last 5 cards as community cards;
+      let communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) *2);
+
       let myCards = [this.myCardIndex1, this.myCardIndex2].concat(communityCardIndices);
       let myHand = new Hand(myCards);
       let numOfSplit = 1; // number of split players
@@ -500,7 +512,8 @@ export class Computer {
         let oHand = new Hand(oCards);
         let compareResult = myHand.compareWith(oHand);
 
-        /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
+        // PURE DEBUG LOGIC,
+        // TODO(zzn) DELETE AFTER DEBUGGING DONE
         if (flags.debugOn) {
           let oCardIndex1 = pickedCardIndices[o * 2];
           let oCardIndex2 = pickedCardIndices[o * 2 + 1];
@@ -555,6 +568,7 @@ export class Computer {
    * @param numberOfCardsToPick, for example, 5 means picking 5 cards from the suit of poker
    * @param alreadyPickedCards
    * @returns {null}
+   * TODO(zzn): test randomness
    */
   private static randomlyPickCards(numberOfCardsToPick:number, alreadyPickedCards:number[]):number[] {
     let localAlreadyPickedCards:number[] = alreadyPickedCards.concat([]); // clone a new instance

@@ -143,7 +143,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare FlushStraight correctly.')
+  @test('should recognize and compare FlushStraights correctly.')
   testRecognizeFlushStraight() {
     let handFlushStraight5high:Hand = new Hand([
       this.card2s, this.card3s, this.card4s,
@@ -160,7 +160,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare FourOfAKind correctly.')
+  @test('should recognize and compare FourOfAKinds correctly.')
   testRecognizeFourOfAKind() {
     let handFour2WithAhigh:Hand = new Hand([
       this.card2s, this.card2c, this.card2h,
@@ -171,15 +171,23 @@ class HandTest {
     let handFour3With9high:Hand = new Hand([
       this.card3s, this.card3c, this.card3h,
       this.card3d, this.card9h, this.card8s, this.cardQc]);
+
+    let handKKKKAAA:Hand = new Hand([
+      this.cardKs, this.cardKc, this.cardKh,
+      this.cardKd, this.cardAh, this.cardAs, this.cardAc]);
     [
         handFour2WithAhigh,
         handFour2WithQhigh,
-        handFour3With9high
+        handFour3With9high,
+        handKKKKAAA
     ]
         .forEach((h)=> assert(h.getHandType() == HandType.FourOfAKind));
     assert(handFour2WithAhigh.resultNumbers[0] == 0);
     assert(handFour2WithQhigh.resultNumbers[0] == 0);
     assert(handFour3With9high.resultNumbers[0] == 1);
+    assert(handKKKKAAA.resultNumbers[0] == 11);
+    assert(handKKKKAAA.resultNumbers[1] == 12);
+
     assert(handFour2WithAhigh.compareWith(handFour2WithQhigh) > 0,
         'Four of 2 With A high FourOfAKind should beat Four of 2 With Q high');
     assert(handFour3With9high.compareWith(handFour2WithAhigh) > 0,
@@ -187,7 +195,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare FourOfAKind correctly.')
+  @test('should recognize and compare FullHouses correctly.')
   testRecognizeFullHouse() {
     let handFull2Pair9:Hand = new Hand([
       this.card2s, this.card2c, this.card2h,
@@ -198,16 +206,33 @@ class HandTest {
     let handFull3Pair8WithAHigh:Hand = new Hand([
       this.card3s, this.card3c, this.card3h,
       this.card8d, this.card9h, this.card8s, this.cardAh]);
+    let handAAAKKKQQ:Hand = new Hand([
+      this.cardAs, this.cardAc, this.cardAh,
+      this.cardKs, this.cardKc, this.cardKh,
+      this.cardQd, this.cardQh]);
+    let handAAKKKQQQ:Hand = new Hand([
+      this.cardQs, this.cardAc, this.cardAh,
+      this.cardKs, this.cardKc, this.cardKh,
+      this.cardQd, this.cardQh]);
+
     [
       handFull2Pair9,
       handFull3Pair8,
-      handFull3Pair8WithAHigh
+      handFull3Pair8WithAHigh,
+      handAAAKKKQQ,
+      handAAKKKQQQ
     ]
         .forEach((h)=> assert(h.getHandType() == HandType.FullHouse));
 
     assert(handFull2Pair9.resultNumbers[0] == 0);
     assert(handFull3Pair8.resultNumbers[0] == 1);
     assert(handFull3Pair8WithAHigh.resultNumbers[0] == 1);
+
+    assert(handAAAKKKQQ.resultNumbers[0] == 12);
+    assert(handAAAKKKQQ.resultNumbers[1] == 11);
+    assert(handAAKKKQQQ.resultNumbers[0] == 11);
+    assert(handAAKKKQQQ.resultNumbers[1] == 12);
+
     assert(handFull3Pair8.compareWith(handFull2Pair9) > 0,
         'House of 3 With Pair of 8 should beat House of 2 With Pair of 9');
     assert(handFull3Pair8.compareWith(handFull3Pair8WithAHigh) == 0,
@@ -215,7 +240,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare Flush correctly.')
+  @test('should recognize and compare Flushes correctly.')
   testRecognizeFlush() {
     let handFlushAhigh:Hand = new Hand([
       this.card2s, this.card3h, this.card4h,
@@ -226,10 +251,17 @@ class HandTest {
     let handFlushQT975high:Hand = new Hand([
       this.card5c, this.card7c, this.card9c,
       this.cardTc, this.card6h, this.cardKh, this.cardQc]);
+
+    // If it's a flush then it's not a straight
+    let hand45678AKFlush456AK:Hand = new Hand([
+      this.card4c, this.card5c, this.card6c,
+      this.card7s, this.card8h, this.cardAc, this.cardKc]);
+
     [
         handFlushAhigh,
         handFlushQT975high,
-        handFlushQT976high
+        handFlushQT976high,
+        hand45678AKFlush456AK
     ]
         .forEach((h)=> assert(h.getHandType() == HandType.Flush));
     assert(handFlushAhigh.resultNumbers[0] == 12);
@@ -242,7 +274,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize 5 high Straight correctly and compare straights correctly.')
+  @test('should recognize and compare Straights correctly, including A2345 as 5 high.')
   testRecognizeStraight() {
     let handStraight6high:Hand = new Hand([
       this.card2s, this.card3c, this.card4s,
@@ -253,15 +285,39 @@ class HandTest {
     let handStraightAhigh:Hand = new Hand([
       this.cardTs, this.cardJc, this.cardKs,
       this.card5c, this.card9h, this.cardAh, this.cardQc]);
+
+    //   AKQJT98, top card A
+    let handAKQJT98:Hand = new Hand([
+      this.cardAs, this.cardKc, this.cardQs,
+      this.cardJc, this.cardTh, this.card9h, this.card8c]);
+
+    //   A2345 89, top card 5
+    let hand1234589:Hand = new Hand([
+      this.cardAs, this.card2c, this.card3s,
+      this.card4c, this.card5h, this.card8h, this.card9c]);
+
+    //   A 34567 9, top card 5
+    let handA345679:Hand = new Hand([
+      this.cardAs, this.card3c, this.card4s,
+      this.card5c, this.card6h, this.card7h, this.card9c]);
+
     [
       handStraight6high,
       handStraight5high,
-      handStraightAhigh
+      handStraightAhigh,
+      handAKQJT98,
+      hand1234589,
+      handA345679
     ]
         .forEach((h)=> assert(h.getHandType() == HandType.Straight));
     assert(handStraight6high.resultNumbers[0] == 4);
     assert(handStraight5high.resultNumbers[0] == 3);
     assert(handStraightAhigh.resultNumbers[0] == 12);
+
+    assert(handAKQJT98.resultNumbers[0] == 12);
+    assert(hand1234589.resultNumbers[0] == 3);
+    assert(handA345679.resultNumbers[0] == 5);
+
     assert(handStraight6high.compareWith(handStraight5high) > 0,
         '6 high straight should beat 5 high');
     assert(handStraightAhigh.compareWith(handStraight6high) > 0,
@@ -297,20 +353,37 @@ class HandTest {
     let hand8833K:Hand = new Hand([
       this.card3s, this.card3c, this.cardTh,
       this.card8d, this.card8h, this.cardKs, this.cardJc]);
+    let hand997744A:Hand = new Hand([
+      this.card9s, this.card9c, this.card7h,
+      this.card7d, this.card4h, this.card4s, this.cardAc]);
+    let hand9977443:Hand = new Hand([
+      this.card9s, this.card9c, this.card7h,
+      this.card7d, this.card4h, this.card4s, this.card3c]);
     [
       hand9922T,
       hand8833K,
+      hand997744A,
+      hand9977443,
     ]
         .forEach((h)=> assert(h.getHandType() == HandType.TwoPairs,
             `Type is actually ${HandType[h.getHandType()]}`));
     assert(hand9922T.resultNumbers[0] == 7);
     assert(hand8833K.resultNumbers[0] == 6);
+
+    assert(hand997744A.resultNumbers[0] == 7);
+    assert(hand997744A.resultNumbers[1] == 5);
+    assert(hand997744A.resultNumbers[2] == 12);
+
+    assert(hand9977443.resultNumbers[0] == 7);
+    assert(hand9977443.resultNumbers[1] == 5);
+    assert(hand9977443.resultNumbers[2] == 2);
+
     assert(hand9922T.compareWith(hand8833K) > 0,
         '9922T should beat 3388K');
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare OnePair correctly.')
+  @test('should recognize and compare OnePairs correctly.')
   testRecognizeOnePair() {
     let hand99T84:Hand = new Hand([
       this.card2s, this.card3c, this.card9h,
@@ -330,7 +403,7 @@ class HandTest {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  @test('should recognize and compare HightCard correctly.')
+  @test('should recognize and compare HightCards correctly.')
   testRecognizeHighCard() {
     let handAKQ97:Hand = new Hand([
       this.card5s, this.card7c, this.card9h,

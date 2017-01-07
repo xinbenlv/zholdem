@@ -163,15 +163,22 @@ var HandTest = (function () {
             this.card3s, this.card3c, this.card3h,
             this.card3d, this.card9h, this.card8s, this.cardQc
         ]);
+        var handKKKKAAA = new compute_1.Hand([
+            this.cardKs, this.cardKc, this.cardKh,
+            this.cardKd, this.cardAh, this.cardAs, this.cardAc
+        ]);
         [
             handFour2WithAhigh,
             handFour2WithQhigh,
-            handFour3With9high
+            handFour3With9high,
+            handKKKKAAA
         ]
             .forEach(function (h) { return chai_1.assert(h.getHandType() == compute_1.HandType.FourOfAKind); });
         chai_1.assert(handFour2WithAhigh.resultNumbers[0] == 0);
         chai_1.assert(handFour2WithQhigh.resultNumbers[0] == 0);
         chai_1.assert(handFour3With9high.resultNumbers[0] == 1);
+        chai_1.assert(handKKKKAAA.resultNumbers[0] == 11);
+        chai_1.assert(handKKKKAAA.resultNumbers[1] == 12);
         chai_1.assert(handFour2WithAhigh.compareWith(handFour2WithQhigh) > 0, 'Four of 2 With A high FourOfAKind should beat Four of 2 With Q high');
         chai_1.assert(handFour3With9high.compareWith(handFour2WithAhigh) > 0, 'Four of 3 With 9 high FourOfAKind should beat Four of 2 With A high');
     };
@@ -189,15 +196,31 @@ var HandTest = (function () {
             this.card3s, this.card3c, this.card3h,
             this.card8d, this.card9h, this.card8s, this.cardAh
         ]);
+        var handAAAKKKQQ = new compute_1.Hand([
+            this.cardAs, this.cardAc, this.cardAh,
+            this.cardKs, this.cardKc, this.cardKh,
+            this.cardQd, this.cardQh
+        ]);
+        var handAAKKKQQQ = new compute_1.Hand([
+            this.cardQs, this.cardAc, this.cardAh,
+            this.cardKs, this.cardKc, this.cardKh,
+            this.cardQd, this.cardQh
+        ]);
         [
             handFull2Pair9,
             handFull3Pair8,
-            handFull3Pair8WithAHigh
+            handFull3Pair8WithAHigh,
+            handAAAKKKQQ,
+            handAAKKKQQQ
         ]
             .forEach(function (h) { return chai_1.assert(h.getHandType() == compute_1.HandType.FullHouse); });
         chai_1.assert(handFull2Pair9.resultNumbers[0] == 0);
         chai_1.assert(handFull3Pair8.resultNumbers[0] == 1);
         chai_1.assert(handFull3Pair8WithAHigh.resultNumbers[0] == 1);
+        chai_1.assert(handAAAKKKQQ.resultNumbers[0] == 12);
+        chai_1.assert(handAAAKKKQQ.resultNumbers[1] == 11);
+        chai_1.assert(handAAKKKQQQ.resultNumbers[0] == 11);
+        chai_1.assert(handAAKKKQQQ.resultNumbers[1] == 12);
         chai_1.assert(handFull3Pair8.compareWith(handFull2Pair9) > 0, 'House of 3 With Pair of 8 should beat House of 2 With Pair of 9');
         chai_1.assert(handFull3Pair8.compareWith(handFull3Pair8WithAHigh) == 0, 'House of 3 With Pair of 8 with different other cards should equal.');
     };
@@ -215,10 +238,16 @@ var HandTest = (function () {
             this.card5c, this.card7c, this.card9c,
             this.cardTc, this.card6h, this.cardKh, this.cardQc
         ]);
+        // If it's a flush then it's not a straight
+        var hand45678AKFlush456AK = new compute_1.Hand([
+            this.card4c, this.card5c, this.card6c,
+            this.card7s, this.card8h, this.cardAc, this.cardKc
+        ]);
         [
             handFlushAhigh,
             handFlushQT975high,
-            handFlushQT976high
+            handFlushQT976high,
+            hand45678AKFlush456AK
         ]
             .forEach(function (h) { return chai_1.assert(h.getHandType() == compute_1.HandType.Flush); });
         chai_1.assert(handFlushAhigh.resultNumbers[0] == 12);
@@ -241,15 +270,36 @@ var HandTest = (function () {
             this.cardTs, this.cardJc, this.cardKs,
             this.card5c, this.card9h, this.cardAh, this.cardQc
         ]);
+        //   AKQJT98, top card A
+        var handAKQJT98 = new compute_1.Hand([
+            this.cardAs, this.cardKc, this.cardQs,
+            this.cardJc, this.cardTh, this.card9h, this.card8c
+        ]);
+        //   A2345 89, top card 5
+        var hand1234589 = new compute_1.Hand([
+            this.cardAs, this.card2c, this.card3s,
+            this.card4c, this.card5h, this.card8h, this.card9c
+        ]);
+        //   A 34567 9, top card 5
+        var handA345679 = new compute_1.Hand([
+            this.cardAs, this.card3c, this.card4s,
+            this.card5c, this.card6h, this.card7h, this.card9c
+        ]);
         [
             handStraight6high,
             handStraight5high,
-            handStraightAhigh
+            handStraightAhigh,
+            handAKQJT98,
+            hand1234589,
+            handA345679
         ]
             .forEach(function (h) { return chai_1.assert(h.getHandType() == compute_1.HandType.Straight); });
         chai_1.assert(handStraight6high.resultNumbers[0] == 4);
         chai_1.assert(handStraight5high.resultNumbers[0] == 3);
         chai_1.assert(handStraightAhigh.resultNumbers[0] == 12);
+        chai_1.assert(handAKQJT98.resultNumbers[0] == 12);
+        chai_1.assert(hand1234589.resultNumbers[0] == 3);
+        chai_1.assert(handA345679.resultNumbers[0] == 5);
         chai_1.assert(handStraight6high.compareWith(handStraight5high) > 0, '6 high straight should beat 5 high');
         chai_1.assert(handStraightAhigh.compareWith(handStraight6high) > 0, 'A high straight should beat 6 high');
     };
@@ -282,13 +332,29 @@ var HandTest = (function () {
             this.card3s, this.card3c, this.cardTh,
             this.card8d, this.card8h, this.cardKs, this.cardJc
         ]);
+        var hand997744A = new compute_1.Hand([
+            this.card9s, this.card9c, this.card7h,
+            this.card7d, this.card4h, this.card4s, this.cardAc
+        ]);
+        var hand9977443 = new compute_1.Hand([
+            this.card9s, this.card9c, this.card7h,
+            this.card7d, this.card4h, this.card4s, this.card3c
+        ]);
         [
             hand9922T,
             hand8833K,
+            hand997744A,
+            hand9977443,
         ]
             .forEach(function (h) { return chai_1.assert(h.getHandType() == compute_1.HandType.TwoPairs, "Type is actually " + compute_1.HandType[h.getHandType()]); });
         chai_1.assert(hand9922T.resultNumbers[0] == 7);
         chai_1.assert(hand8833K.resultNumbers[0] == 6);
+        chai_1.assert(hand997744A.resultNumbers[0] == 7);
+        chai_1.assert(hand997744A.resultNumbers[1] == 5);
+        chai_1.assert(hand997744A.resultNumbers[2] == 12);
+        chai_1.assert(hand9977443.resultNumbers[0] == 7);
+        chai_1.assert(hand9977443.resultNumbers[1] == 5);
+        chai_1.assert(hand9977443.resultNumbers[2] == 2);
         chai_1.assert(hand9922T.compareWith(hand8833K) > 0, '9922T should beat 3388K');
     };
     //noinspection JSUnusedGlobalSymbols
@@ -341,19 +407,19 @@ __decorate([
     mocha_typescript_1.test('hand compare should correctly compare different card types.')
 ], HandTest.prototype, "testCompareDifferentTypes");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare FlushStraight correctly.')
+    mocha_typescript_1.test('should recognize and compare FlushStraights correctly.')
 ], HandTest.prototype, "testRecognizeFlushStraight");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare FourOfAKind correctly.')
+    mocha_typescript_1.test('should recognize and compare FourOfAKinds correctly.')
 ], HandTest.prototype, "testRecognizeFourOfAKind");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare FourOfAKind correctly.')
+    mocha_typescript_1.test('should recognize and compare FullHouses correctly.')
 ], HandTest.prototype, "testRecognizeFullHouse");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare Flush correctly.')
+    mocha_typescript_1.test('should recognize and compare Flushes correctly.')
 ], HandTest.prototype, "testRecognizeFlush");
 __decorate([
-    mocha_typescript_1.test('should recognize 5 high Straight correctly and compare straights correctly.')
+    mocha_typescript_1.test('should recognize and compare Straights correctly, including A2345 as 5 high.')
 ], HandTest.prototype, "testRecognizeStraight");
 __decorate([
     mocha_typescript_1.test('should recognize and compare ThreeOfAkIND correctly.')
@@ -362,10 +428,10 @@ __decorate([
     mocha_typescript_1.test('should recognize and compare TwoPairs correctly.')
 ], HandTest.prototype, "testRecognizeTwoPairs");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare OnePair correctly.')
+    mocha_typescript_1.test('should recognize and compare OnePairs correctly.')
 ], HandTest.prototype, "testRecognizeOnePair");
 __decorate([
-    mocha_typescript_1.test('should recognize and compare HightCard correctly.')
+    mocha_typescript_1.test('should recognize and compare HightCards correctly.')
 ], HandTest.prototype, "testRecognizeHighCard");
 HandTest = __decorate([
     mocha_typescript_1.suite("Hand ")

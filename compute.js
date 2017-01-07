@@ -89,6 +89,9 @@ var Card = (function () {
             str += "(" + this.index + ")";
         return str;
     };
+    Card.prototype.toString = function () {
+        return this.getNumberWithColorStr();
+    };
     Card.prototype.getColor = function () {
         switch (this.index % 4) {
             case 0:
@@ -106,7 +109,7 @@ var Card = (function () {
 exports.Card = Card;
 var Hand = (function () {
     function Hand(myCardIndices) {
-        if (true || exports.flags.debugOn) {
+        if (exports.flags.debugOn) {
             exports.assert(myCardIndices.length >= 5, "There should be at least 5 cards, but only is " + myCardIndices.length + ".");
             var s_1 = {};
             var duplicated_1 = false;
@@ -239,22 +242,30 @@ var Hand = (function () {
             else
                 numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
         }
-        var hasPair = false;
-        var hasThreeOfAKind = false;
-        for (var key in numberSet) {
-            if (numberSet[key] == 3) {
-                hasThreeOfAKind = true;
-                houseIndex = parseInt(key);
+        // TODO(zzn): The following logic might be shared by FullHouse and TwoPairs, pick and pick
+        // First pick a largest house
+        var currentLargestHouseNumber = null;
+        Object.keys(numberSet).forEach(function (keyStr) {
+            if (numberSet[keyStr] >= 3) {
+                var key = parseInt(keyStr);
+                if (currentLargestHouseNumber == null || currentLargestHouseNumber <= key)
+                    currentLargestHouseNumber = key;
             }
-            else if (numberSet[key] == 2) {
-                hasPair = true;
-                pairIndex = parseInt(key);
+        });
+        // Then pick a largest pair
+        var currentLargestPairNumber = null;
+        Object.keys(numberSet).forEach(function (keyStr) {
+            if (parseInt(keyStr) != currentLargestHouseNumber && numberSet[keyStr] >= 2) {
+                var key = parseInt(keyStr);
+                if (currentLargestPairNumber == null || currentLargestPairNumber <= key)
+                    currentLargestPairNumber = key;
             }
+        });
+        if (currentLargestPairNumber != null && currentLargestHouseNumber != null) {
+            this.resultNumbers = [currentLargestHouseNumber, currentLargestPairNumber];
+            return true;
         }
-        if (hasPair && hasThreeOfAKind) {
-            this.resultNumbers = [houseIndex, pairIndex];
-        }
-        return hasPair && hasThreeOfAKind;
+        return false;
     };
     Hand.prototype.isFlush = function () {
         var colorSet = {};
@@ -280,11 +291,6 @@ var Hand = (function () {
         }
         return isFlush;
     };
-    // TODO test-cases
-    //   AKQJT98, top card A
-    //   A2345 89, top card 5
-    //   A 34567 9, top card 7
-    //   345678 JQ, top card 8
     Hand.prototype.isStraight = function () {
         var numberSet = {};
         var highCardIndex = null;
@@ -315,8 +321,6 @@ var Hand = (function () {
             this.resultNumbers = [highCardIndex];
         return result;
     };
-    // TODO test casse:
-    //   AAAKKKQQ, resultNumbers should be AK
     Hand.prototype.isThreeOfAKind = function () {
         var numberSet = {};
         var currentTopCardNumber = null;
@@ -448,13 +452,15 @@ var Computer = (function () {
         this.myCardIndex2 = myCardIndex2;
         this.emulationTimes = emulationTimes;
         this.numberOfPlayers = numberOfPlayers;
-        console.assert(myCardIndex2 != myCardIndex1, 'initial cards should not be the same');
-        // TODO(zzn): add more validation
+        exports.assert(myCardIndex2 != myCardIndex1, 'Initial cards should not be the same.');
+        exports.assert(numberOfPlayers <= 0 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
     }
     /**
      * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
      * @returns {number}
-     * TODO(zzn): compute confidential interval, compute split ratio
+     *
+     * TODO(zzn):
+     *  - extract parameters to a separate functions for more players, more known cards and more range
      */
     Computer.prototype.computeEquity = function () {
         var splitTimes = new Array(this.numberOfPlayers + 1);
@@ -462,10 +468,10 @@ var Computer = (function () {
             splitTimes[i] = 0;
         var splitRates = new Array(this.numberOfPlayers + 1);
         var splitEquities = new Array(this.numberOfPlayers + 1);
-        // console.log(`XXX INFO start emulation with total times of ${this.emulationTimes}`);
         for (var i = 0; i < this.emulationTimes; i++) {
             var pickedCardIndices = Computer.randomlyPickCards((this.numberOfPlayers - 1) * 2 + 5, [this.myCardIndex1, this.myCardIndex2]);
-            var communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) * 2); // last 5 cards as community cards;
+            // last 5 cards as community cards;
+            var communityCardIndices = pickedCardIndices.slice((this.numberOfPlayers - 1) * 2);
             var myCards = [this.myCardIndex1, this.myCardIndex2].concat(communityCardIndices);
             var myHand = new Hand(myCards);
             var numOfSplit = 1; // number of split players
@@ -473,7 +479,8 @@ var Computer = (function () {
                 var oCards = [pickedCardIndices[o * 2], pickedCardIndices[o * 2 + 1]].concat(communityCardIndices);
                 var oHand = new Hand(oCards);
                 var compareResult = myHand.compareWith(oHand);
-                /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
+                // PURE DEBUG LOGIC,
+                // TODO(zzn) DELETE AFTER DEBUGGING DONE
                 if (exports.flags.debugOn) {
                     var oCardIndex1 = pickedCardIndices[o * 2];
                     var oCardIndex2 = pickedCardIndices[o * 2 + 1];
@@ -529,6 +536,7 @@ var Computer = (function () {
      * @param numberOfCardsToPick, for example, 5 means picking 5 cards from the suit of poker
      * @param alreadyPickedCards
      * @returns {null}
+     * TODO(zzn): test randomness
      */
     Computer.randomlyPickCards = function (numberOfCardsToPick, alreadyPickedCards) {
         var localAlreadyPickedCards = alreadyPickedCards.concat([]); // clone a new instance
