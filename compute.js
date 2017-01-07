@@ -1,5 +1,12 @@
 "use strict";
-var debugOn = false;
+exports.flags = {
+    debugOn: true
+};
+exports.assert = function (assertionBoolean, reason) {
+    if (!assertionBoolean) {
+        throw new Error(reason === undefined ? 'Assertion failed.' : reason);
+    }
+};
 Object.prototype['sortAsIntegerArray'] = function () {
     // assumming this is an Array<number>
     return this.sort(function (a, b) { return a - b; });
@@ -78,7 +85,7 @@ var Card = (function () {
     };
     Card.prototype.getNumberWithColorStr = function () {
         var str = this.getNumberStr() + this.getColorStrShort();
-        if (debugOn)
+        if (exports.flags.debugOn)
             str += "(" + this.index + ")";
         return str;
     };
@@ -99,7 +106,21 @@ var Card = (function () {
 exports.Card = Card;
 var Hand = (function () {
     function Hand(myCardIndices) {
-        // TODO assert no duplicates
+        if (true || exports.flags.debugOn) {
+            exports.assert(myCardIndices.length >= 5, "There should be at least 5 cards, but only is " + myCardIndices.length + ".");
+            var s_1 = {};
+            var duplicated_1 = false;
+            var dupIndex_1 = null;
+            myCardIndices.forEach(function (i) {
+                if (s_1[i]) {
+                    duplicated_1 = true;
+                    dupIndex_1 = i;
+                }
+                else
+                    s_1[i] = true;
+            });
+            exports.assert(!duplicated_1, "There are duplicated indices. Duplicated Index = " + dupIndex_1 + ".");
+        }
         this.myCards = [];
         this.myCards = myCardIndices.map(function (cI) { return new Card(cI); });
         this.handType = this.analyse();
@@ -453,7 +474,7 @@ var Computer = (function () {
                 var oHand = new Hand(oCards);
                 var compareResult = myHand.compareWith(oHand);
                 /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
-                if (debugOn) {
+                if (exports.flags.debugOn) {
                     var oCardIndex1 = pickedCardIndices[o * 2];
                     var oCardIndex2 = pickedCardIndices[o * 2 + 1];
                     var oCard1 = new Card(oCardIndex1);

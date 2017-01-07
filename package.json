@@ -5,6 +5,7 @@
   "main": "main.js",
   "dependencies": {},
   "devDependencies": {
+    "chai": "^3.5.0",
     "mocha": "^3.2.0",
     "mocha-typescript": "^1.0.15",
     "typescript": "^2.1.4"

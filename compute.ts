@@ -1,4 +1,14 @@
-let debugOn = false;
+
+export let flags = {
+  debugOn : true
+};
+
+export let assert = function(assertionBoolean, reason?:string) {
+  if (!assertionBoolean) {
+    throw new Error(reason === undefined ? 'Assertion failed.': reason);
+  }
+};
+
 Object.prototype['sortAsIntegerArray'] = function() {
   // assumming this is an Array<number>
   return this.sort((a,b) => a-b);
@@ -123,7 +133,7 @@ export class Card {
 
   getNumberWithColorStr(): string {
     let str = this.getNumberStr() + this.getColorStrShort();
-    if (debugOn) str += `(${this.index})`;
+    if (flags.debugOn) str += `(${this.index})`;
     return str;
   }
 
@@ -154,7 +164,21 @@ export class Hand {
   private handType:HandType;
 
   constructor(myCardIndices:number[]) {
-    // TODO assert no duplicates
+    if (true || flags.debugOn) {
+      assert(myCardIndices.length >= 5,
+          `There should be at least 5 cards, but only is ${myCardIndices.length}.`);
+      let s = {};
+      let duplicated = false;
+      let dupIndex = null;
+      myCardIndices.forEach((i) => {
+        if (s[i]) {
+          duplicated = true;
+          dupIndex = i;
+        } else s[i] = true;
+      });
+      assert(!duplicated, `There are duplicated indices. Duplicated Index = ${dupIndex}.`);
+    }
+
     this.myCards = [];
     this.myCards = myCardIndices.map(cI => new Card(cI));
     this.handType = this.analyse();
@@ -477,7 +501,7 @@ export class Computer {
         let compareResult = myHand.compareWith(oHand);
 
         /// PURE DEBUG LOGIC, TODOD DELETE AFTER DEBUGGING DONE
-        if (debugOn) {
+        if (flags.debugOn) {
           let oCardIndex1 = pickedCardIndices[o * 2];
           let oCardIndex2 = pickedCardIndices[o * 2 + 1];
           let oCard1 = new Card(oCardIndex1);
