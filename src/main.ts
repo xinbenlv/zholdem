@@ -1,25 +1,30 @@
-import {Simulator, EquitySimulationResult} from "./simulator";
+import {Simulator, SimulationResult} from "./simulator";
 import {Card} from "./card";
 import {Hand, HandType} from "./hand";
 
 class PercentageEntry {
-  public simulationResult:EquitySimulationResult;
+  public simulationResult:SimulationResult;
   public positionInSheetI:number;
   public positionInSheetJ:number;
   public numberOfEquivalentHands:number;
   public handsBeat:number;
 }
-let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 10009):void {
+
+let computeCsvSheetNew = function(numberOfPlayer:number = 2, simTimes:number = 1000):void {
+
+
+};
+let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000):void {
   /**
    * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
    * bottom right is 22.
    * First index is the row, and second index is the column
    * @type {Array}
    */
-  let sheet:EquitySimulationResult[][] = [];
+  let sheet:SimulationResult[][] = [];
   let percentageSheet:PercentageEntry[][] = [];
   for (let i = 0; i < 13; i++) {
-    let row = new Array<EquitySimulationResult>(13);
+    let row = new Array<SimulationResult>(13);
     sheet.push(row);
     percentageSheet.push(new Array<PercentageEntry>(13));
   }
@@ -30,7 +35,7 @@ let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000
       let cardIndex1 = n1 * 4;
       let cardIndex2 = n2 * 4;
       let computer = new Simulator(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
-      let equityResult:EquitySimulationResult = computer.computeEquity();
+      let equityResult:SimulationResult = computer.computeEquity();
       sheet[12 - n1][12 - n2] = equityResult;
     }
     console.log('XXX computed a line of suited odds, row card number = ' + n1);
@@ -42,7 +47,7 @@ let computeCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000
       let cardIndex1 = n1 * 4 + 1;
       let cardIndex2 = n2 * 4;
       let computer = new Simulator(cardIndex1,cardIndex2, simTimes, numberOfPlayer);
-      let equityResult:EquitySimulationResult = computer.computeEquity();
+      let equityResult:SimulationResult = computer.computeEquity();
       sheet[12 - n1][12 - n2] = equityResult;
     }
     console.log('XXX computed a line of off suited odds, row card number = ' + n1);

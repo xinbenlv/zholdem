@@ -10,4 +10,12 @@ export class DevTool {
     }
   };
 
+  public static createZeroArray(size:number):number[] {
+    let a = new Array<number>(size);
+    for (let i = 0; i < size; i ++) {
+      a[i] = 0;
+    }
+    return a;
+  }
+
 }

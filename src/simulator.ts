@@ -1,9 +1,14 @@
 import {Card} from "./card";
 import {DevTool} from "./dev_tool";
 import {Hand, HandType} from "./hand";
+export class SimulationParameter {
+  public numOfPlayers:number;
+  public knownPlayerCardIndices:number[][];
+  public knownCommunityCardIndices:number[];
+  public simulationTimes:number;
+}
 
-export class EquitySimulationResult {
-
+export class SimulationResult {
   /**
    * An array of all ratio of split in the size of number of players
    *
@@ -45,6 +50,16 @@ export class EquitySimulationResult {
    * ) ^ 0.5 / (n-1)^0.5
    */
   public totalEquityStD:number;
+
+
+  public winTimesByPlayers:number[];
+
+  /** for example, if in one time two players split the pot, the split times for each will be 0.5
+  */
+  public splitTimesByPlayers:number[];
+  public totalEquityByPlayers:number[];
+  public totalEquityStdByPlayers:number[];
+  public splitEquitiesByPlaysers:number[];
 }
 
 export class Simulator {
@@ -57,6 +72,118 @@ export class Simulator {
     DevTool.assert(numberOfPlayers <= 10 && numberOfPlayers >= 2, 'There should be 2 - 9 players');
   }
 
+  public static simulate(param:SimulationParameter):SimulationResult {
+    let numOfPlayers = param.numOfPlayers;
+    let splitEquitiesByPlaysers:number[] = DevTool.createZeroArray(numOfPlayers);
+    let allPickedCardIndices = [];
+    let winTimesByPlayers:number[] = DevTool.createZeroArray(numOfPlayers);
+    let splitTimesByPlayers:number[] = DevTool.createZeroArray(numOfPlayers);
+    let totalEquityStdByPlayers:number[] = new Array(numOfPlayers);
+    let totalEquityByPlayers:number[] = new Array(numOfPlayers);
+    param.knownPlayerCardIndices
+        .forEach((cardIndicesList) => {
+      allPickedCardIndices = allPickedCardIndices.concat(cardIndicesList);
+    });
+    allPickedCardIndices = allPickedCardIndices.concat(param.knownCommunityCardIndices);
+    for (let s = 0 ; s < param.simulationTimes; s++) {
+      let randomlyPickedCardIndices = Simulator.randomlyPickCards(
+          numOfPlayers * 2 + 5 - allPickedCardIndices.length,
+          allPickedCardIndices);
+
+      // fill in all unfulfilled player's cards
+      let cursorOfRandomPick = 0;
+      let simulatedPlayerCardIndices:number[] = [];
+      for (let p = 0; p < numOfPlayers; p++) {
+        if (param.knownPlayerCardIndices.length > p) {
+          if (param.knownPlayerCardIndices[p].length == 2) {
+            simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(param.knownPlayerCardIndices[p]);
+          } else {
+            let fullFileNumOfCards = 2 - param.knownPlayerCardIndices[p].length;
+            simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(
+                randomlyPickedCardIndices.slice(cursorOfRandomPick, fullFileNumOfCards));
+            cursorOfRandomPick += fullFileNumOfCards;
+          }
+        } else {
+          simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(
+              randomlyPickedCardIndices.slice(cursorOfRandomPick, 2));
+          cursorOfRandomPick += 2;
+        }
+      }
+
+      // last 5 cards as community cards;
+      let communityCardIndices =
+          param.knownCommunityCardIndices.concat(randomlyPickedCardIndices.slice(cursorOfRandomPick));
+
+      let currentWinners = [];
+      let hands:Hand[] = [];
+
+      for (let p = 0; p < numOfPlayers; p++) {
+        hands.push(new Hand([
+            simulatedPlayerCardIndices[p * 2],
+            simulatedPlayerCardIndices[p * 2 + 1]
+        ].concat(communityCardIndices)));
+      }
+      let p1 = 0;
+      let p2 = 1;
+      do {
+        let p1CompareWithP2:number = hands[p1].compareWith(hands[p2]);
+        if (p1CompareWithP2 > 0) {
+          currentWinners = [p1];
+          p2++;
+        } else if (p1CompareWithP2 == 0) {
+          if (currentWinners.indexOf(p1) < 0) currentWinners = currentWinners.concat([p1]);
+          if (currentWinners.indexOf(p2) < 0) currentWinners = currentWinners.concat([p2]);
+          p2++;
+        } else { // p1CompareWithP2 < 0
+          currentWinners = [p2];
+          p1++;
+        }
+      } while(p1 < numOfPlayers && p2 < numOfPlayers);
+      for (let p = 0; p < numOfPlayers; p++) {
+        if (currentWinners.indexOf(p) >= 0) { // winners include me
+          if (currentWinners.length > 1) { // me split with others
+              splitTimesByPlayers[p] += 1;
+              splitEquitiesByPlaysers[p] += 1/ currentWinners.length;
+          }
+          else winTimesByPlayers[p] += 1; // me win alone
+        }
+      }
+      if (DevTool.flags.debugOn) { // XXX Pure debug logic
+        let totalWinTimes = 0;
+        let mySplitTimes = splitTimesByPlayers[0];
+        winTimesByPlayers.forEach((w) => {totalWinTimes+= w});
+        let mySingleSplitTimes = splitTimesByPlayers[0];
+        if (totalWinTimes + mySingleSplitTimes != s + 1) {
+          console.log(' XXX something wrong!');
+        }
+        if (splitTimesByPlayers[0] != splitTimesByPlayers[1]) {
+          console.log(' XXX something wrong!');
+        }
+        DevTool.assert(totalWinTimes + mySingleSplitTimes == s + 1,
+            `split time and total win should match s`);
+      }
+    }
+
+    let result = new SimulationResult();
+    result.winTimesByPlayers = winTimesByPlayers;
+    result.splitTimesByPlayers = splitTimesByPlayers;
+
+    let tmp = 0;
+    for (let p = 0; p < numOfPlayers; p++) {
+      let e/*equity*/ = (winTimesByPlayers[p] + splitEquitiesByPlaysers[p]) / param.simulationTimes;
+      totalEquityByPlayers[p] = e;
+      let part1 = Math.pow(1 - e, 2) * winTimesByPlayers[p];
+      let part2 = Math.pow((e - splitEquitiesByPlaysers[p]),2 ) * splitTimesByPlayers[p];
+      let part3 = Math.pow(e, 2) * (param.simulationTimes - winTimesByPlayers[p] - splitTimesByPlayers[p]);
+      let denominator = param.simulationTimes * (param.simulationTimes - 1);
+      totalEquityStdByPlayers[p] = Math.sqrt((part1 + part2 + part3) / denominator);
+    }
+    result.totalEquityByPlayers = totalEquityByPlayers;
+    result.totalEquityStdByPlayers = totalEquityStdByPlayers;
+    result.splitTimesByPlayers = splitTimesByPlayers;
+    result.splitEquitiesByPlaysers = splitEquitiesByPlaysers;
+    return result;
+  }
   /**
    * Computes the equity of my cards given [emulationTimes] and [numberOfPlayers]
    * @returns {number}
@@ -64,7 +191,7 @@ export class Simulator {
    * TODO(zzn): extract parameters to a separate functions for more players,
    *            more known cards and more range
    */
-  computeEquity():EquitySimulationResult {
+  computeEquity():SimulationResult {
     let splitTimes:number[] = new Array(this.numberOfPlayers + 1);
     for (let i = 0; i <= this.numberOfPlayers; i++) splitTimes[i] = 0;
     let splitRates:number[] = new Array(this.numberOfPlayers + 1);
@@ -118,7 +245,7 @@ export class Simulator {
       }
       splitTimes[numOfSplit] ++;
     }
-    let result = new EquitySimulationResult();
+    let result = new SimulationResult();
     for (let i = 0; i <= this.numberOfPlayers /*yes it is LTE(<=) */ ; i++) {
       splitRates[i] = splitTimes[i] / this.emulationTimes;
       if (i > 0) splitEquities[i] = splitRates[i] / i;

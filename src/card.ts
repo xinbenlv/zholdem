@@ -1,4 +1,70 @@
 import {DevTool} from "./dev_tool";
+export class Cards {
+  public static card2s = 0;
+  public static card2c = 1;
+  public static card2h = 2;
+  public static card2d = 3;
+
+  public static card3s = 4;
+  public static card3c = 5;
+  public static card3h = 6;
+  public static card3d = 7;
+
+  public static card4s = 8;
+  public static card4c = 9;
+  public static card4h = 10;
+  public static card4d = 11;
+
+  public static card5s = 12;
+  public static card5c = 13;
+  public static card5h = 14;
+  public static card5d = 15;
+
+  public static card6s = 16;
+  public static card6c = 17;
+  public static card6h = 18;
+  public static card6d = 19;
+
+  public static card7s = 20;
+  public static card7c = 21;
+  public static card7h = 22;
+  public static card7d = 23;
+
+  public static card8s = 24;
+  public static card8c = 25;
+  public static card8h = 26;
+  public static card8d = 27;
+
+  public static card9s = 28;
+  public static card9c = 29;
+  public static card9h = 30;
+  public static card9d = 31;
+
+  public static cardTs = 32;
+  public static cardTc = 33;
+  public static cardTh = 34;
+  public static cardTd = 35;
+
+  public static cardJs = 36;
+  public static cardJc = 37;
+  public static cardJh = 38;
+  public static cardJd = 39;
+
+  public static cardQs = 40;
+  public static cardQc = 41;
+  public static cardQh = 42;
+  public static cardQd = 43;
+
+  public static cardKs = 44;
+  public static cardKc = 45;
+  public static cardKh = 46;
+  public static cardKd = 47;
+
+  public static cardAs = 48;
+  public static cardAc = 49;
+  public static cardAh = 50;
+  public static cardAd = 51;
+}
 
 export enum Color {
   Spade = 0,
