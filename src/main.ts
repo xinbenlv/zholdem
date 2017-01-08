@@ -1,6 +1,5 @@
 import {Simulator, SimulationResult, SimulationParameter} from "./simulator";
-import {Card} from "./card";
-import {Hand, HandType} from "./hand";
+import {Cards} from "./card";
 
 class PercentageEntry {
   public simulationResult:SimulationResult;
@@ -10,7 +9,7 @@ class PercentageEntry {
   public handsBeat:number;
 }
 
-let computeCsvSheetNew = function(numberOfPlayer:number = 9, simTimes:number = 1000):void {
+let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000):void {
   /**
    * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
    * bottom right is 22.
@@ -129,23 +128,23 @@ let computeCsvSheetNew = function(numberOfPlayer:number = 9, simTimes:number = 1
   }
 };
 
-let computeSingleHand = function():void {
-  let communityCardIndices = [28, 19, 9, 3, 10];
-  let myHand = new Hand([51, 46].concat(communityCardIndices));
-  let oHand = new Hand([15, 20].concat(communityCardIndices));
-  let result = myHand.compareWith(oHand);
-  console.log(`XXX DEBUG: My Cards: ${myHand.myCards[0].getNumberWithColorStr() + ' ' + myHand.myCards[1].getNumberWithColorStr()}`);
-  console.log(`XXX DEBUG: O Cards: ${oHand.myCards[0].getNumberWithColorStr() + ' ' + oHand.myCards[1].getNumberWithColorStr()}`);
-  console.log(`XXX DEBUG: My Hand Type: ${HandType[myHand.getHandType()]}`);
-  console.log(`XXX DEBUG: O Hand Type: ${HandType[oHand.getHandType()]}`);
-  console.log(`XXX DEBUG: Community Cards: ${communityCardIndices.map(cI => new Card(cI).getNumberWithColorStr()).join(' ')}`);
-  console.log(`XXX DEBUG: compare result = ${result}`);
-  console.log('');
-  console.log(`XXX DEBUG result = ${result}`);
+let computeAAvKK = function () {
+  console.log(`Start 1s`);
+  let param:SimulationParameter = new SimulationParameter();
+  param.simulationTimes = 1000;
+  param.knownPlayerCardIndices = [
+    [Cards.cardAs, Cards.cardAh],
+    [Cards.cardKs, Cards.cardKh],
+  ];
+  param.knownCommunityCardIndices = [Cards.card2s, Cards.card3s, Cards.cardQh];
+  param.numOfPlayers = 2;
+  let result:SimulationResult = Simulator.simulate(param);
+  console.log(`Simulation result of 9 players in AA v KK color crush is: ` +
+      `${result.totalEquityByPlayers}`);
 };
 
 let main = function():void {
-  computeCsvSheetNew();
+  computeAAvKK();
 };
 
 main();

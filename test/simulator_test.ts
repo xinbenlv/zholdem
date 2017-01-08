@@ -27,9 +27,9 @@ class SimultorTest {
     assert(result.totalEquityStdByPlayers[1] == 0);
   }
 
-  @test('should correctly handle AA v ?? on ?????.')
+  @test('should correctly handle AA preflot in headsup (2 players).')
   @slow(2000) // This test is randomized and not deterministic.
-  testAAvXXonXXXXX() {
+  testAAin2Players() {
     // TODO(zzn): make this test deterministic
     let param:SimulationParameter = new SimulationParameter();
     param.simulationTimes = 1000;
