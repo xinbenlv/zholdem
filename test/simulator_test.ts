@@ -1,5 +1,5 @@
 
-import {suite, test, slow} from "mocha-typescript";
+import {suite, test, slow, timeout} from "mocha-typescript";
 import {SimulationParameter, Simulator, SimulationResult} from "../src/simulator";
 import {Cards} from "../src/card";
 import {assert} from "chai";
@@ -28,7 +28,7 @@ class SimultorTest {
   }
 
   @test('should correctly handle AA v ?? on ?????.')
-  @slow(1000) // This test is randomized and not deterministic.
+  @slow(2000) // This test is randomized and not deterministic.
   testAAvXXonXXXXX() {
     // TODO(zzn): make this test deterministic
     let param:SimulationParameter = new SimulationParameter();
@@ -61,7 +61,8 @@ class SimultorTest {
   }
 
   @test('should correctly handle AA preflot in 9 players.')
-  @slow(1000)
+  @slow(10000)
+  @timeout(20000) // Long time out is set for coverage
   testAAin9Players() {
     // TODO(zzn): make this test deterministic
     let param:SimulationParameter = new SimulationParameter();
