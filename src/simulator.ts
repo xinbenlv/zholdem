@@ -94,22 +94,23 @@ export class Simulator {
       let cursorOfRandomPick = 0;
       let simulatedPlayerCardIndices:number[] = [];
       for (let p = 0; p < numOfPlayers; p++) {
-        if (param.knownPlayerCardIndices.length > p) {
+        if (p < param.knownPlayerCardIndices.length) {
           if (param.knownPlayerCardIndices[p].length == 2) {
             simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(param.knownPlayerCardIndices[p]);
           } else {
             let fullFileNumOfCards = 2 - param.knownPlayerCardIndices[p].length;
             simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(
-                randomlyPickedCardIndices.slice(cursorOfRandomPick, fullFileNumOfCards));
+                randomlyPickedCardIndices
+                    .slice(cursorOfRandomPick, cursorOfRandomPick + fullFileNumOfCards));
             cursorOfRandomPick += fullFileNumOfCards;
           }
         } else {
           simulatedPlayerCardIndices = simulatedPlayerCardIndices.concat(
-              randomlyPickedCardIndices.slice(cursorOfRandomPick, 2));
+              randomlyPickedCardIndices
+                  .slice(cursorOfRandomPick, cursorOfRandomPick + 2));
           cursorOfRandomPick += 2;
         }
       }
-
       // last 5 cards as community cards;
       let communityCardIndices =
           param.knownCommunityCardIndices.concat(randomlyPickedCardIndices.slice(cursorOfRandomPick));
@@ -147,20 +148,6 @@ export class Simulator {
           }
           else winTimesByPlayers[p] += 1; // me win alone
         }
-      }
-      if (DevTool.flags.debugOn) { // XXX Pure debug logic
-        let totalWinTimes = 0;
-        let mySplitTimes = splitTimesByPlayers[0];
-        winTimesByPlayers.forEach((w) => {totalWinTimes+= w});
-        let mySingleSplitTimes = splitTimesByPlayers[0];
-        if (totalWinTimes + mySingleSplitTimes != s + 1) {
-          console.log(' XXX something wrong!');
-        }
-        if (splitTimesByPlayers[0] != splitTimesByPlayers[1]) {
-          console.log(' XXX something wrong!');
-        }
-        DevTool.assert(totalWinTimes + mySingleSplitTimes == s + 1,
-            `split time and total win should match s`);
       }
     }
 

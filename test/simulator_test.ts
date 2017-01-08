@@ -28,21 +28,24 @@ class SimultorTest {
   }
 
   @test('should correctly handle AA v ?? on ?????.')
-  @slow(1000)
+  @slow(1000) // This test is randomized and not deterministic.
   testAAvXXonXXXXX() {
+    // TODO(zzn): make this test deterministic
     let param:SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 100;
+    param.simulationTimes = 1000;
     param.knownPlayerCardIndices = [
       [Cards.cardAs, Cards.cardAc],
     ];
     param.knownCommunityCardIndices = [];
     param.numOfPlayers = 2;
     let result:SimulationResult = Simulator.simulate(param);
-    assert(result.winTimesByPlayers[0] > param.simulationTimes * 0.5,
-        `AA should generally win.`); // AA should generally win
+
+    // AA should generally win
+    assert(result.winTimesByPlayers[0] > param.simulationTimes * 0.8,
+        `AA should generally win, but has a winTime of ${result.winTimesByPlayers[0]}.`);
     assert(result.winTimesByPlayers[1] > 0,
         `Other player have valid win times.`);
-    assert(result.totalEquityByPlayers[0] > 0.5);
+    assert(result.totalEquityByPlayers[0] > 0.8);
     assert(result.totalEquityByPlayers[0] > 0);
     assert(
         result.winTimesByPlayers[0] +
@@ -54,6 +57,27 @@ class SimultorTest {
         `${result.splitTimesByPlayers[0]}`);
     assert(result.splitTimesByPlayers[0] == result.splitTimesByPlayers[1],
         `In two player game, split times should equal.`);
+    SimultorTest.alwaysHoldRelationships(param, result);
+  }
+
+  @test('should correctly handle AA preflot in 9 players.')
+  @slow(1000)
+  testAAin9Players() {
+    // TODO(zzn): make this test deterministic
+    let param:SimulationParameter = new SimulationParameter();
+    param.simulationTimes = 1000;
+    param.knownPlayerCardIndices = [
+      [Cards.cardAs, Cards.cardAc],
+    ];
+    param.knownCommunityCardIndices = [];
+    param.numOfPlayers = 9;
+    let result:SimulationResult = Simulator.simulate(param);
+
+    // AA should generally win
+    assert(result.winTimesByPlayers[0] > param.simulationTimes * 0.3,
+        `AA should generally win, but has a winTime of ${result.winTimesByPlayers[0]}.`);
+    assert(result.totalEquityByPlayers[0] > 0.3);
+    assert(result.totalEquityByPlayers[0] > 0);
     SimultorTest.alwaysHoldRelationships(param, result);
   }
 

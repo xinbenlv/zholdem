@@ -31,6 +31,7 @@ class CardTest {
     assert(cardAc.getNumberStr() == 'A', 'CardAc should get number str of A.');
     assert(card2s.getColorStrShort() == 's', 'Card2s should get color str of s.');
     assert(cardAc.getColorStrShort() == 'c', 'CardAc should get color str of c.');
+    assert(cardAc.toString() == 'Ac', 'CardAc should get number and color str of Ac.');
     assert(card2s.getNumberWithColorStr() == '2s', 'Card2s should get color str of 2s.');
     assert(cardAc.getNumberWithColorStr() == 'Ac', 'CardAc should get color str of Ac.');
     assert(cardTh.getNumberWithColorStr() == 'Th', 'CardTh should get color str of Th.');
