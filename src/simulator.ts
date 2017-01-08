@@ -54,6 +54,9 @@ export class Simulator {
       allPickedCardIndices = allPickedCardIndices.concat(cardIndicesList);
     });
     allPickedCardIndices = allPickedCardIndices.concat(param.knownCommunityCardIndices);
+
+    // TODO(zzn): add exact computation (instead of random)
+    // to see if it's picking a small number of cards.
     for (let s = 0 ; s < param.simulationTimes; s++) {
       let randomlyPickedCardIndices = Simulator.randomlyPickCards(
           numOfPlayers * 2 + 5 - allPickedCardIndices.length,
