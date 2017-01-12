@@ -1,8 +1,5 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "experimentalDecorators": true
   }
 }

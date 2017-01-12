@@ -154,7 +154,7 @@ let computeAAvKK = function () {
   param.numOfPlayers = 2;
   let result:SimulationResult = Simulator.simulate(param);
   console.log(`Simulation result of 9 players in AA v KK color crush is: ` +
-      `${result.totalEquityByPlayers}, split is ${result.splitEquitiesByPlaysers}.`);
+      `${result.totalEquityByPlayers}, split is ${result.splitPartialTimesByPlayers}.`);
 };
 
 let main = function():void {

@@ -8,42 +8,17 @@ export class SimulationParameter {
 }
 
 export class SimulationResult {
-
-  /**
-   * splitInMRate = splitRates[M -1];
-   * totalEquity = splitIn1Rate / 1 + splitIn2Rate / 2 + ... splitIn9Rate / 9
-   */
-  public totalEquity:number;
-
-  /**
-   * (
-   *    (splitIn2Rate / 1 - totalEquity)^2 * splitIn1Rate * N +
-   *    (splitIn2Rate / 2 - totalEquity)^2 * splitIn2Rate * N +
-   *    (splitIn2Rate / 3 - totalEquity)^2 * splitIn3Rate * N +
-   *    ...
-   *    (splitIn2Rate / 9 - totalEquity)^2 * splitIn9Rate * N +
-   *
-   *    (totalEquity - 0)^2 * (1 - Sum(all split rate)) * N +
-   * ) ^ 0.5 / (n-1)^0.5
-   */
-  public totalEquityStD:number;
-
-
   public winTimesByPlayers:number[];
-
-  /** for example, if in one time two players split the pot, the split times for each will be 0.5
-  */
   public splitTimesByPlayers:number[];
+  public splitPartialTimesByPlayers:number[];
   public totalEquityByPlayers:number[];
   public totalEquityStdByPlayers:number[];
-  public splitEquitiesByPlaysers:number[];
 }
 
 export class Simulator {
-
   public static simulate(param:SimulationParameter):SimulationResult {
     let numOfPlayers = param.numOfPlayers;
-    let splitEquitiesByPlaysers:number[] = DevTool.createZeroArray(numOfPlayers);
+    let splitPartialTimesByPlaysers:number[] = DevTool.createZeroArray(numOfPlayers);
     let allPickedCardIndices = [];
     let winTimesByPlayers:number[] = DevTool.createZeroArray(numOfPlayers);
     let splitTimesByPlayers:number[] = DevTool.createZeroArray(numOfPlayers);
@@ -99,24 +74,29 @@ export class Simulator {
       let p1 = 0;
       let p2 = 1;
       do {
-        let p1CompareWithP2:number = hands[p1].compareWith(hands[p2]);
-        if (p1CompareWithP2 > 0) {
-          currentWinners = [p1];
-          p2++;
-        } else if (p1CompareWithP2 == 0) {
+        let nextP =Math.max(p1,p2) + 1;
+        let whetherP12eatP2:number = hands[p1].compareWith(hands[p2]);
+        if (whetherP12eatP2 > 0) {
+          if (currentWinners.indexOf(p1) < 0) { // p1 is not the winner
+            currentWinners = [p1];
+          } // otherwise, if p1 is already in the current winner, we ignore
+          p2 = nextP;
+        } else if (whetherP12eatP2 == 0) {
           if (currentWinners.indexOf(p1) < 0) currentWinners = currentWinners.concat([p1]);
           if (currentWinners.indexOf(p2) < 0) currentWinners = currentWinners.concat([p2]);
-          p2++;
-        } else { // p1CompareWithP2 < 0
-          currentWinners = [p2];
-          p1++;
+          p2 = nextP;
+        } else { // whetherP12eatP2 < 0
+          if (currentWinners.indexOf(p2) < 0) { // p2 is not the winner
+            currentWinners = [p2];
+          } // otherwise, if p1 is already in the current winner, we ignore
+          p1 = nextP;
         }
       } while(p1 < numOfPlayers && p2 < numOfPlayers);
       for (let p = 0; p < numOfPlayers; p++) {
         if (currentWinners.indexOf(p) >= 0) { // winners include me
           if (currentWinners.length > 1) { // me split with others
-              splitTimesByPlayers[p] += 1;
-              splitEquitiesByPlaysers[p] += 1/ currentWinners.length;
+            splitTimesByPlayers[p] += 1;
+            splitPartialTimesByPlaysers[p] += (1.0/currentWinners.length);
           }
           else winTimesByPlayers[p] += 1; // me win alone
         }
@@ -127,10 +107,10 @@ export class Simulator {
     result.winTimesByPlayers = winTimesByPlayers;
     result.splitTimesByPlayers = splitTimesByPlayers;
     for (let p = 0; p < numOfPlayers; p++) {
-      let e/*equity*/ = (winTimesByPlayers[p] + splitEquitiesByPlaysers[p]) / param.simulationTimes;
+      let e/*equity*/ = (winTimesByPlayers[p] + splitPartialTimesByPlaysers[p]) / param.simulationTimes;
       totalEquityByPlayers[p] = e;
       let part1 = Math.pow(1 - e, 2) * winTimesByPlayers[p];
-      let part2 = Math.pow((e - splitEquitiesByPlaysers[p]),2 ) * splitTimesByPlayers[p];
+      let part2 = Math.pow((e - splitPartialTimesByPlaysers[p]),2 ) * splitTimesByPlayers[p];
       let part3 = Math.pow(e, 2) * (param.simulationTimes - winTimesByPlayers[p] - splitTimesByPlayers[p]);
       let denominator = param.simulationTimes * (param.simulationTimes - 1);
       totalEquityStdByPlayers[p] = Math.sqrt((part1 + part2 + part3) / denominator);
@@ -138,7 +118,7 @@ export class Simulator {
     result.totalEquityByPlayers = totalEquityByPlayers;
     result.totalEquityStdByPlayers = totalEquityStdByPlayers;
     result.splitTimesByPlayers = splitTimesByPlayers;
-    result.splitEquitiesByPlaysers = splitEquitiesByPlaysers;
+    result.splitPartialTimesByPlayers = splitPartialTimesByPlaysers;
     return result;
   }
 
