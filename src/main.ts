@@ -1,6 +1,7 @@
 import {Simulator, SimulationResult, SimulationParameter} from "./simulator";
 import {Cards} from "./card";
 
+
 class PercentageEntry {
   public simulationResult:SimulationResult;
   public positionInSheetI:number;
@@ -9,7 +10,8 @@ class PercentageEntry {
   public handsBeat:number;
 }
 
-let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 1000):void {
+let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100):void {
+  let debugOutput = false;
   /**
    * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
    * bottom right is 22.
@@ -39,7 +41,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
       let result:SimulationResult = Simulator.simulate(param);
       sheet[12 - n1][12 - n2] = result;
     }
-    console.log('XXX computed a line of suited odds, row card number = ' + n1);
+    if (debugOutput) console.log('XXX computed a line of suited odds, row card number = ' + n1);
   }
 
   // Off suited
@@ -57,37 +59,37 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
       let result:SimulationResult = Simulator.simulate(param);
       sheet[12 - n1][12 - n2] = result;
     }
-    console.log('XXX computed a line of off suited odds, row card number = ' + n1);
+    if (debugOutput)  console.log('XXX computed a line of off suited odds, row card number = ' + n1);
   }
 
-  console.log(''); // newline
-  console.log('Total Equity');
+  if (debugOutput) console.log(''); // newline
+  if (debugOutput) console.log('Total Equity');
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
       row = row + sheet[i][j].totalEquityByPlayers[0].toFixed(4) + ',';
     }
-    console.log(row);
+    if (debugOutput) console.log(row);
   }
 
-  console.log(''); // newline
-  console.log('Total Equity Confidential Interval of 95% (2*Sigma)');
+  if (debugOutput) console.log(''); // newline
+  if (debugOutput) console.log('Total Equity Confidential Interval of 95% (2*Sigma)');
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
       row = row + (sheet[i][j].totalEquityStdByPlayers[0] * 2).toFixed(4) + ',';
     }
-    console.log(row);
+    if (debugOutput) console.log(row);
   }
 
-  console.log(''); // newline
-  console.log('Total Equity Over Average Of Players');
+  if (debugOutput)  console.log(''); // newline
+  if (debugOutput)  console.log('Total Equity Over Average Of Players');
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
       row = row + ((sheet[i][j].totalEquityByPlayers[0] * numberOfPlayer - 1) * 100.0).toFixed(2) + '%,';
     }
-    console.log(row);
+    if (debugOutput)  console.log(row);
   }
 
   // Compute top percentage;
@@ -107,7 +109,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
   }
 
   handRanks.sort((p1, p2) => {
-    return p1.simulationResult.totalEquityStdByPlayers[0] -
+    return p1.simulationResult.totalEquityByPlayers[0] -
         p2.simulationResult.totalEquityByPlayers[0];
   }).reverse();
 
@@ -117,15 +119,27 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
     currentHandsBeat -= p.numberOfEquivalentHands;
   }
 
-  console.log(''); // newline
-  console.log('Percentage Map');
+  if (debugOutput) console.log(''); // newline
+  if (debugOutput) console.log('Percentage Map');
+
   for (let i = 0; i < 13; i++) {
     let row = '';
     for (let j = 0; j < 13; j++) {
       row = row + (percentageSheet[i][j].handsBeat / 1326 * 100).toFixed(2) + '%,';
     }
-    console.log(row);
+    if (debugOutput) console.log(row);
   }
+
+  let output = [];
+  for (let i = 0; i < 13; i++) {
+    let row = [];
+    for (let j = 0; j < 13; j++) {
+      row.push((percentageSheet[i][j].handsBeat / 1326 * 100).toFixed(2) + '');
+    }
+    output.push(row);
+    if (debugOutput) console.log(row);
+  }
+  console.log(JSON.stringify(output));
 };
 
 let computeAAvKK = function () {
@@ -144,7 +158,10 @@ let computeAAvKK = function () {
 };
 
 let main = function():void {
-  computeAAvKK();
+  for (let p = 2; p <= 10; p++) {
+    console.log(`Nubmer of Players = ${p}`);
+    generateCsvSheet(p, 10000);
+  }
 };
 
 main();

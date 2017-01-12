@@ -126,8 +126,6 @@ export class Simulator {
     let result = new SimulationResult();
     result.winTimesByPlayers = winTimesByPlayers;
     result.splitTimesByPlayers = splitTimesByPlayers;
-
-    let tmp = 0;
     for (let p = 0; p < numOfPlayers; p++) {
       let e/*equity*/ = (winTimesByPlayers[p] + splitEquitiesByPlaysers[p]) / param.simulationTimes;
       totalEquityByPlayers[p] = e;

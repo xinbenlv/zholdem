@@ -1,11 +1,9 @@
 {
-  "name": "holdem-heatmap",
-  "version": "1.0.0",
+  "name": "zholdem",
+  "version": "1.0.2",
   "description": "A library for computing holdem hands",
   "main": "main.js",
   "dependencies": {
-    "@types/seedrandom": "^2.4.27",
-    "seedrandom": "^2.4.2"
   },
   "devDependencies": {
     "chai": "^3.5.0",

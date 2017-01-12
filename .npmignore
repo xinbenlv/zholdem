@@ -1,0 +1,12 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+.vscode/
+node_modules/
+npm-debug.log
+src/**/*.js
+test/**/*.js
+coverage/
+
+online-heatmap-headsup.jpg
+test
+results

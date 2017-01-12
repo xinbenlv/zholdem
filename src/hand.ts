@@ -145,8 +145,6 @@ export class Hand {
 
   private isFullHouse():boolean {
     let numberSet = {};
-    let houseIndex = null;
-    let pairIndex = null;
     for (let myCard of this.myCards) {
       if (numberSet[myCard.getNumber()] === undefined) numberSet[myCard.getNumber()] = 1;
       else numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
