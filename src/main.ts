@@ -1,6 +1,7 @@
 import {Simulator, SimulationResult, SimulationParameter} from "./simulator";
 import {Cards} from "./card";
-
+import {Hand, HandType} from "./hand";
+import {Street} from "./street";
 
 class PercentageEntry {
   public simulationResult:SimulationResult;
@@ -32,7 +33,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
       let cardIndex1 = n1 * 4;
       let cardIndex2 = n2 * 4;
       let param:SimulationParameter = new SimulationParameter();
-      param.simulationTimes = simTimes;
+      param.maxSimulationTimes = simTimes;
       param.knownPlayerCardIndices = [
         [cardIndex1, cardIndex2],
       ];
@@ -50,7 +51,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
       let cardIndex1 = n1 * 4 + 1;
       let cardIndex2 = n2 * 4;
       let param:SimulationParameter = new SimulationParameter();
-      param.simulationTimes = simTimes;
+      param.maxSimulationTimes = simTimes;
       param.knownPlayerCardIndices = [
         [cardIndex1, cardIndex2],
       ];
@@ -145,7 +146,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
 let computeAAvKK = function () {
   console.log(`Start 1s`);
   let param:SimulationParameter = new SimulationParameter();
-  param.simulationTimes = 1000;
+  param.maxSimulationTimes = 1000;
   param.knownPlayerCardIndices = [
     [Cards.cardAs, Cards.cardAh],
     [Cards.cardKs, Cards.cardKh],
@@ -157,11 +158,30 @@ let computeAAvKK = function () {
       `${result.totalEquityByPlayers}, split is ${result.splitPartialTimesByPlayers}.`);
 };
 
-let main = function():void {
-  for (let p = 2; p <= 10; p++) {
-    console.log(`Nubmer of Players = ${p}`);
-    generateCsvSheet(p, 10000);
+let handTypeBeforeStreet = function() {
+  let param = new SimulationParameter();
+  param.maxSimulationTimes = 10000;
+  param.knownPlayerCardIndices = [];
+  param.knownCommunityCardIndices = [];
+  param.streetLimit = Street.flop;
+  param.numOfPlayers = 1;
+  let result:SimulationResult = Simulator.simulate(param);
+  console.log(`TotalEquity by HandType in a ${param.numOfPlayers} players game.`);
+  let beatPercentage = 100;
+  for (let handType of Hand.allHandTypes) {
+    let beatenByPercentage = 100 - beatPercentage;
+    beatPercentage -= result.totalEquityByHandTypes[handType] * 100;
+    console.log(
+        `HandType ${HandType[handType]}, \n` +
+        `         equilty = ${(result.totalEquityByHandTypes[handType] * 100).toFixed(2)}%\t\t` +
+        `         Strictly beats ${beatPercentage.toFixed(2)}%\t\t` +
+        `         Strictly beaten by ${beatenByPercentage.toFixed(2)}%\t\t`);
+
   }
+};
+
+let main = function():void {
+  handTypeBeforeStreet();
 };
 
 main();

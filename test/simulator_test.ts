@@ -2,13 +2,15 @@ import {suite, test, slow, timeout} from "mocha-typescript";
 import {SimulationParameter, Simulator, SimulationResult} from "../src/simulator";
 import {Cards} from "../src/card";
 import {assert} from "chai";
+import {HandType, Hand} from "../src/hand";
+import {DevTool} from "../src/dev_tool";
 @suite("Simulator ")
 class SimultorTest {
 
   @test('should correctly handle AA v KK on AAKKQ.')
   testAAvKKonAAKKQ() {
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 100;
+    param.maxSimulationTimes = 100;
     param.knownPlayerCardIndices = [
       [Cards.cardAs, Cards.cardAc], [Cards.cardKs, Cards.cardKc]
     ];
@@ -24,6 +26,8 @@ class SimultorTest {
     assert(result.totalEquityByPlayers[1] == 0);
     assert(result.totalEquityStdByPlayers[0] == 0);
     assert(result.totalEquityStdByPlayers[1] == 0);
+    SimultorTest.asserHandTypeWins(result, HandType.FourOfAKind);
+
   }
 
   @test('should correctly handle AA preflot in headsup (2 players).')
@@ -31,7 +35,7 @@ class SimultorTest {
   testAAin2Players() {
     // TODO(zzn): make this test deterministic
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 1000;
+    param.maxSimulationTimes = 1000;
     param.knownPlayerCardIndices = [
       [Cards.cardAs, Cards.cardAc],
     ];
@@ -40,7 +44,7 @@ class SimultorTest {
     let result: SimulationResult = Simulator.simulate(param);
 
     // AA should generally win
-    assert(result.winTimesByPlayers[0] > param.simulationTimes * 0.8,
+    assert(result.winTimesByPlayers[0] > param.maxSimulationTimes * 0.8,
         `AA should generally win, but has a winTime of ${result.winTimesByPlayers[0]}.`);
     assert(result.winTimesByPlayers[1] > 0,
         `Other player have valid win times.`);
@@ -50,7 +54,7 @@ class SimultorTest {
         result.winTimesByPlayers[0] +
         result.winTimesByPlayers[1] +
         result.splitTimesByPlayers[0]
-        == param.simulationTimes,
+        == param.maxSimulationTimes,
         `Total win times and split times should equal to total simulation time. ` +
         `But is actually ${result.winTimesByPlayers[0]}, ${result.winTimesByPlayers[1]}, ` +
         `${result.splitTimesByPlayers[0]}`);
@@ -65,7 +69,7 @@ class SimultorTest {
   testAAin9Players() {
     // TODO(zzn): make this test deterministic
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 1000;
+    param.maxSimulationTimes = 1000;
     param.knownPlayerCardIndices = [
       [Cards.cardAs, Cards.cardAc],
     ];
@@ -74,7 +78,7 @@ class SimultorTest {
     let result: SimulationResult = Simulator.simulate(param);
 
     // AA should generally win
-    assert(result.winTimesByPlayers[0] > param.simulationTimes * 0.3,
+    assert(result.winTimesByPlayers[0] > param.maxSimulationTimes * 0.3,
         `AA should generally win, but has a winTime of ${result.winTimesByPlayers[0]}.`);
     assert(result.totalEquityByPlayers[0] > 0.3);
     assert(result.totalEquityByPlayers[0] > 0);
@@ -85,7 +89,7 @@ class SimultorTest {
   testSimpleSplitCase() {
     // TODO(zzn): make this test deterministic
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 1;
+    param.maxSimulationTimes = 1;
     param.knownPlayerCardIndices = [
       [Cards.cardQs, Cards.cardQc],
       [Cards.cardQh, Cards.cardQd],
@@ -110,7 +114,7 @@ class SimultorTest {
   testMutliSplitCase1() {
     // TODO(zzn): make this test deterministic
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 1;
+    param.maxSimulationTimes = 1;
     param.knownPlayerCardIndices = [
       [Cards.cardJs, Cards.cardJc],
       [Cards.cardJh, Cards.cardJd],
@@ -139,16 +143,17 @@ class SimultorTest {
     assert(result.splitTimesByPlayers[1] == 0, `Split times of player 1 is ${result.splitPartialTimesByPlayers[1]}.`);
     assert(result.splitTimesByPlayers[2] == 1, `Split times of player 2 is ${result.splitPartialTimesByPlayers[2]}.`);
     assert(result.splitTimesByPlayers[2] == 1, `Split times of player 3 is ${result.splitPartialTimesByPlayers[3]}.`);
+
+    SimultorTest.asserHandTypeWins(result, HandType.OnePair);
     SimultorTest.assertAlwaysHoldRelationships(param, result);
   }
-
 
   @test('should correctly handle split simple 3 split case with multiple players split in separate ' +
       'tiers in one hand.')
   testThreePlayerSplitCase() {
     // TODO(zzn): make this test deterministic
     let param: SimulationParameter = new SimulationParameter();
-    param.simulationTimes = 1;
+    param.maxSimulationTimes = 1;
     param.knownPlayerCardIndices = [
       [Cards.cardQs, Cards.cardJs],
       [Cards.cardQd, Cards.cardJd],
@@ -172,6 +177,7 @@ class SimultorTest {
     assert(result.splitTimesByPlayers[1] == 1);
     assert(result.splitTimesByPlayers[2] == 1);
     SimultorTest.assertAlwaysHoldRelationships(param, result);
+    SimultorTest.asserHandTypeWins(result, HandType.HighCard);
   }
 
   /**
@@ -192,16 +198,16 @@ class SimultorTest {
     }
 
     for (let wt of result.winTimesByPlayers) {
-      assert(wt <= param.simulationTimes,
-          `The win times of every player should be <= ${param.simulationTimes}.`);
+      assert(wt <= param.maxSimulationTimes,
+          `The win times of every player should be <= ${param.maxSimulationTimes}.`);
       assert(wt >= 0, `The win times of every player should be >= 0,` +
           `, but is actually ${JSON.stringify(wt)}.`);
       totalWinTimes += wt;
     }
 
     for (let st of result.splitTimesByPlayers) {
-      assert(st <= param.simulationTimes,
-          `The split times of every player should be <= ${param.simulationTimes}, ` +
+      assert(st <= param.maxSimulationTimes,
+          `The split times of every player should be <= ${param.maxSimulationTimes}, ` +
           `but is actually ${JSON.stringify(result)}.`);
       assert(st >= 0, `The split times of every player should be >= 0, ` +
           `but is actually ${JSON.stringify(result)}.`);
@@ -209,15 +215,38 @@ class SimultorTest {
     }
 
     for (let spt of result.splitPartialTimesByPlayers) {
-      assert(spt <= param.simulationTimes,
-          `The split partial times of every player should be <= ${param.simulationTimes}, ` +
+      assert(spt <= param.maxSimulationTimes,
+          `The split partial times of every player should be <= ${param.maxSimulationTimes}, ` +
           `but is actually ${JSON.stringify(result)}.`);
       assert(spt >= 0, `The split partial times of every player should be >= 0, ` +
           `but is actually ${JSON.stringify(result)}.`);
       totalWinTimes += spt;
     }
 
+    let sumEquity = 0;
+    for (let handType in result.totalEquityByHandTypes) {
+      sumEquity += parseFloat(result.totalEquityByHandTypes[handType]);
+    }
+
+    assert(DevTool.doubleEqual(sumEquity, 1),
+        `The sum of total equity by HandType should be 1, but is actually ` +
+        `${sumEquity}, the totalEquityByHandTypes is ${JSON.stringify(result)}.`);
+
     assert(Math.abs(totalEquity - 1) <= 0.01, `Total equity should always equal to 1, but is ` +
         `${JSON.stringify(result.totalEquityByPlayers)}, result=${JSON.stringify(result)}.`);
   }
+
+  private static asserHandTypeWins(result:SimulationResult, winningHandType:HandType) {
+    assert(DevTool.doubleEqual(result.totalEquityByHandTypes[winningHandType],1),
+        `The total equity of ${winningHandType} in this one should be 1, but is actually` +
+        `${JSON.stringify(result.totalEquityByHandTypes)}.`);
+    for(let handType of Hand.allHandTypes) {
+      if (handType != winningHandType)
+        assert(DevTool.doubleEqual(result.totalEquityByHandTypes[handType],0),
+            `The total equity of handType other than ${winningHandType} in ` +
+            `this one should be 0, but is actually` +
+            `${JSON.stringify(result.totalEquityByHandTypes)}.`);
+    }
+  }
+
 }

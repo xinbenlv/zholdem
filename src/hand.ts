@@ -1,10 +1,6 @@
 import {Card, Color} from "./card";
 import {DevTool} from "./dev_tool";
 
-Object.prototype['sortAsIntegerArray'] = function() {
-  // assumming this is an Array<number>
-  return this.sort((a,b) => a-b);
-};
 
 export enum HandType {
   FlushStraight = 9,
@@ -20,6 +16,17 @@ export enum HandType {
 
 
 export class Hand {
+  public static allHandTypes:Array<HandType> = [
+    HandType.FlushStraight,
+    HandType.FourOfAKind,
+    HandType.FullHouse,
+    HandType.Flush,
+    HandType.Straight,
+    HandType.ThreeOfAKind,
+    HandType.TwoPairs,
+    HandType.OnePair,
+    HandType.HighCard,
+  ];
   /**
    * Indices of the 7 cards that I have.
    */
@@ -103,7 +110,7 @@ export class Hand {
         }
       });
       let numbers:number[] = Object.keys(numberSet)
-          .map((keyStr) => parseInt(keyStr))['sortAsIntegerArray']();
+          .map((keyStr) => parseInt(keyStr)).sort(DevTool.sortAsIntegerArray);
       if (numbers.indexOf(12) > 0) {
         numbers = [-1].concat(numbers);
       }
@@ -137,7 +144,7 @@ export class Hand {
       let kicker = Object.keys(numberSet)
           .map(keyStr => parseInt(keyStr))
           .filter(index => index!=cardOfFourIndex)
-          ['sortAsIntegerArray']().reverse()[0];
+          .sort(DevTool.sortAsIntegerArray).reverse()[0];
       this.resultNumbers = [cardOfFourIndex, kicker];
     }
     return result;
@@ -209,7 +216,7 @@ export class Hand {
       if (numberSet[myCard.getNumber()] === undefined) numberSet[myCard.getNumber()] = 1;
       else numberSet[myCard.getNumber()] = numberSet[myCard.getNumber()] + 1;
     });
-    let numbers:number[] = Object.keys(numberSet).map((keyStr) => parseInt(keyStr))['sortAsIntegerArray']();
+    let numbers:number[] = Object.keys(numberSet).map((keyStr) => parseInt(keyStr)).sort(DevTool.sortAsIntegerArray);
     if (numbers.indexOf(12) > 0) {
       numbers = [-1].concat(numbers);
     }
@@ -249,7 +256,7 @@ export class Hand {
     if (result) {
       let otherNumbers = this.myCards.map((card:Card) => card.getNumber())
           .filter(number => number != currentTopCardNumber)
-          ['sortAsIntegerArray']()
+          .sort(DevTool.sortAsIntegerArray)
           .reverse()
           .slice(0, 2);
       this.resultNumbers = [currentTopCardNumber].concat(otherNumbers);
@@ -271,12 +278,12 @@ export class Hand {
       let pairNumbers = Object.keys(numberSet)
           .filter((key) => numberSet[key] >= 2)
           .map((keyStr) => parseInt(keyStr))
-          ['sortAsIntegerArray']()
+          .sort(DevTool.sortAsIntegerArray)
           .reverse()
           .slice(0, 2);
       let restNumber = Object.keys(numberSet).map(keyStr => parseInt(keyStr))
           .filter(key => pairNumbers.indexOf(key) < 0) // not selected in pairIndex
-          ['sortAsIntegerArray']()
+          .sort(DevTool.sortAsIntegerArray)
           .reverse()[0];
       this.resultNumbers = pairNumbers.concat([restNumber]);
       return true;
@@ -294,7 +301,7 @@ export class Hand {
         let otherNumbers:number[] = this.myCards
             .map((card:Card) => card.getNumber())
             .filter((n:number) => n != pairNumber)
-            ['sortAsIntegerArray']()
+            .sort(DevTool.sortAsIntegerArray)
             .reverse().slice(0,3);
         this.resultNumbers = [pairNumber].concat(otherNumbers);
         return true;
@@ -308,7 +315,7 @@ export class Hand {
    */
   private isHighCard(): boolean {
     this.resultNumbers = this.myCards.map((card:Card) => card.getNumber())
-        ['sortAsIntegerArray']()
+        .sort(DevTool.sortAsIntegerArray)
         .reverse().slice(0,5);
     return true;
   }
