@@ -1,7 +1,10 @@
+
 import {Simulator, SimulationResult, SimulationParameter} from "./simulator";
 import {Cards} from "./card";
 import {Hand, HandType} from "./hand";
 import {Street} from "./street";
+let filesystem = require('fs');
+const jsonfile = require('jsonfile');
 
 class PercentageEntry {
   public simulationResult:SimulationResult;
@@ -11,7 +14,9 @@ class PercentageEntry {
   public handsBeat:number;
 }
 
-let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100):void {
+let generateCsvSheet = function(numberOfPlayer:number = 9,
+                                simTimes:number = 10000,
+                                file:string):void {
   let debugOutput = false;
   /**
    * a 13x13 rows [rol][col] as shown in http://i35.tinypic.com/anmufp.jpg, topleft is AA
@@ -130,7 +135,7 @@ let generateCsvSheet = function(numberOfPlayer:number = 9, simTimes:number = 100
     }
     if (debugOutput) console.log(row);
   }
-
+  jsonfile.writeFileSync(file, percentageSheet);
   let output = [];
   for (let i = 0; i < 13; i++) {
     let row = [];
@@ -158,30 +163,48 @@ let computeAAvKK = function () {
       `${result.totalEquityByPlayers}, split is ${result.splitPartialTimesByPlayers}.`);
 };
 
-let handTypeBeforeStreet = function() {
+let handTypeBeforeStreet = function(numPlayer:number, street:Street, file:string) {
   let param = new SimulationParameter();
   param.maxSimulationTimes = 10000;
   param.knownPlayerCardIndices = [];
   param.knownCommunityCardIndices = [];
-  param.streetLimit = Street.flop;
-  param.numOfPlayers = 1;
+  param.streetLimit = street;
+  param.numOfPlayers = numPlayer;
   let result:SimulationResult = Simulator.simulate(param);
   console.log(`TotalEquity by HandType in a ${param.numOfPlayers} players game.`);
-  let beatPercentage = 100;
+  let strictlyBeatsPercentage = 100;
+  let beatsRatioSet = {};
   for (let handType of Hand.allHandTypes) {
-    let beatenByPercentage = 100 - beatPercentage;
-    beatPercentage -= result.totalEquityByHandTypes[handType] * 100;
+    let strictlyBeatenByPercentage = 100 - strictlyBeatsPercentage;
+    let equityRatio = result.totalEquityByHandTypes[handType];
+    strictlyBeatsPercentage -= result.totalEquityByHandTypes[handType] * 100;
     console.log(
         `HandType ${HandType[handType]}, \n` +
-        `         equilty = ${(result.totalEquityByHandTypes[handType] * 100).toFixed(2)}%\t\t` +
-        `         Strictly beats ${beatPercentage.toFixed(2)}%\t\t` +
-        `         Strictly beaten by ${beatenByPercentage.toFixed(2)}%\t\t`);
-
+        `         equilty = ${(equityRatio * 100).toFixed(2)}%\t\t` +
+        `         Strictly beats ${strictlyBeatsPercentage.toFixed(2)}%\t\t` +
+        `         Strictly beaten by ${strictlyBeatenByPercentage.toFixed(2)}%\t\t`);
+    beatsRatioSet[handType] = {
+      'StrictlyBeatsRatio': strictlyBeatsPercentage / 100,
+      'EquityRatio':equityRatio,
+      'StrictlyBeatenByRatio': strictlyBeatenByPercentage / 100
+    }
+  }
+  jsonfile.writeFileSync(file, beatsRatioSet);
+};
+let printCsvSheet = function() {
+  for (let i = 1; i <= 10; i++) {
+    let file = `simulation-${i}-players.json`;
+    generateCsvSheet(i, 10000, file);
   }
 };
-
+let printBeatsRatio = function() {
+  for (let i = 1; i <= 10; i++) {
+    let file = `beatsRatio-${i}-players.json`;
+    handTypeBeforeStreet(i, Street.river, file);
+  }
+};
 let main = function():void {
-  handTypeBeforeStreet();
+  printBeatsRatio();
 };
 
 main();
