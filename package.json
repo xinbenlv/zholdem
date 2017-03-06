@@ -16,8 +16,8 @@
     "typescript": "^2.1.4"
   },
   "scripts": {
-    "main": "tsc -p tssconfig.json && node src/main.js",
-    "test": "tsc -p tsconfig.json && mocha",
+    "main": "tsc -p . && node src/main.js",
+    "test": "tsc -p . && mocha",
     "test-watch": "mocha-typescript-watch",
     "cover": "istanbul cover _mocha -- -R spec",
     "coveralls": "npm run cover && cat ./coverage/lcov.info | coveralls"
