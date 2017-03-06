@@ -4,6 +4,7 @@ import {Cards} from "../src/card";
 import {assert} from "chai";
 import {HandType, Hand} from "../src/hand";
 import {DevTool} from "../src/dev_tool";
+
 @suite("Simulator ")
 class SimultorTest {
 
