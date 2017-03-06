@@ -17,7 +17,7 @@
   },
   "scripts": {
     "main": "tsc -p . && node src/main.js",
-    "test": "tsc -p . && mocha",
+    "test": "tsc --version && tsc -p . && mocha",
     "test-watch": "mocha-typescript-watch",
     "cover": "istanbul cover _mocha -- -R spec",
     "coveralls": "npm run cover && cat ./coverage/lcov.info | coveralls"
