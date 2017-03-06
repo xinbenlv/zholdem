@@ -159,7 +159,8 @@ class SimultorTest {
       [Cards.cardQd, Cards.cardJd],
       [Cards.cardQh, Cards.cardJh],
     ];
-    param.knownCommunityCardIndices = [Cards.cardAh, Cards.cardKd, Cards.card2s, Cards.card7d];
+    param.knownCommunityCardIndices =
+        [Cards.cardAh, Cards.cardKd, Cards.card2s, Cards.card7d, Cards.card4s];
     param.numOfPlayers = 3;
     let result: SimulationResult = Simulator.simulate(param);
 
