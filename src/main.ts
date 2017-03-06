@@ -3,8 +3,7 @@ import {Simulator, SimulationResult, SimulationParameter} from "./simulator";
 import {Cards} from "./card";
 import {Hand, HandType} from "./hand";
 import {Street} from "./street";
-let fs = require('fs');
-let jsonfile = require('jsonfile');
+import * as jsonfile from 'jsonfile';
 
 class PercentageEntry {
   public simulationResult:SimulationResult;
